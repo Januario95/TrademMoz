@@ -1,0 +1,71 @@
+{% extends 'pages/homepage.html' %}
+
+{% block title %}
+	<title>Analise de Investimentos</title>
+{% endblock %}
+
+{% block style %}
+	<style>
+		.investiments-analysis {
+			display: flex;
+			flex-wrap: wrap;
+			width: 100%;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: flex-start;
+			margin-top: 30px;
+		}
+		.accoes-div {
+			display: flex;
+			justify-content: flex-start;
+			align-items: flex-start;
+			background-color: lightblue;
+			margin: 10px;
+			text-align: left;
+			width: 150px;
+			padding-left: 5px;
+			padding-right: 5px;
+			text-decoration: none;
+		}
+		.accoes-div:active {
+			font-weight: bold;
+		}
+		.left-section {
+			width: 20%;
+			margin-right: 5%;
+		}
+		.right-section {
+			width: 70%
+		}
+		.highlight {     
+			font-weight: bold;
+		}
+	</style>
+{% endblock %}
+
+{% block section %}
+	<div class="investiments-analysis">
+		<div class="left-section">
+			<h3>Analise de Investimentos (Accoes)</h3>
+			{% for div_ in titles %}
+				<a href="{% url 'client:investiments_analysis' page %}" class="{{ div_ }} accoes-div">
+					{{ div_ }}
+				</a>
+			{% endfor %}
+		</div>
+		<div class="right-section">
+			<h1>Welcome {{ data.name }}</h1>
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascript %}
+	<script>
+		$(document).ready(function() {
+			$('.accoes-div').click(function(){
+				console.log('Hello')
+				$('.accoes-div').addClass('highlight');
+			});
+		});
+	</script>
+{% endblock %}

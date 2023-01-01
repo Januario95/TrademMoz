@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}
+	<title>Faca o Login</title>
+{% endblock %}
+
+{% block style %}
+	<style>
+		.register-form {
+			display: flex;
+			flex-wrap: wrap;
+			width: 60%;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			margin-top: 50px;
+		}
+		.error {
+			font-style: italic;
+			color: red;
+		}
+		.helptext {
+			display: none;
+		}
+		input[type="text"],
+		input[type="submit"],
+		#id_password {
+			margin-top: 10px;
+			width: 270px;
+			height: 32px;
+			text-align: center;
+			border: 1px solid #333;
+			border-radius: 5px;
+		}
+		input[type="text"]:focus,
+		input[type="submit"]:focus,
+		#id_password:focus {
+			border: none;
+			outline: 2px solid lightblue;
+		}
+		.password-checkbox {
+			display: flex;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: flex-start;
+		}
+		.btn-submit {
+			cursor: pointer;
+			border: none !important;
+			transition: all 0.15s;
+			background-color: #53B9EE;
+		}
+		.btn-submit:focus {
+			border: none !important;
+			background-color: #72BFE7; 
+		}
+		.user-exists,
+		.error {
+			font-style: italic;
+			color: red;
+		}
+	</style>
+{% endblock %}
+message
+{% block content %}
+	<form class="register-form" method="POST">
+		{% if message %}
+			<p class="user-exists">{{ message }}</p>
+		{% endif %}
+		<span class="error"></span>
+		{{ form }}
+		{% csrf_token %}
+		<div class="password-checkbox">
+			<label for="show-hide-password"><span class="show-hide-text">Mostrar</span> password</label>
+			<input type="checkbox" id="show-hide-password" class="show-hide-password" >
+		</div>
+		<input type="submit" class="btn-submit" value="Login">
+		<div class="user-does-not-exists">
+			<p>Se ainda nao possue uma conta, pode cadastrar-se <a href="{% url 'client:register' %}">AQUI</a></p>
+		</div>
+	</form>
+{% endblock %}
+
+{% block javascript %}
+	<script>
+		let show_hide_password = document.querySelector('#show-hide-password');
+		let password1 = document.querySelector('#id_password');
+		let error = document.querySelector('.error');
+		let username = document.querySelector('#id_username');
+		username.focus();
+
+		show_hide_password.addEventListener('click', e => {
+			hideDisplayPassword(password1);
+		});
+
+		function hideDisplayPassword(tag) {
+			if (tag.type === "password") {
+				tag.type = "text";
+			} else {
+				tag.type = "password";
+			}
+		}
+	</script>
+{% endblock %}
+

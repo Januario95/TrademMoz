@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}
+	<title>Cadastre-se a nossa pagina</title>
+{% endblock %}
+
+{% block style %}
+	<style>
+		.register-form {
+			display: flex;
+			flex-wrap: wrap;
+			width: 100%;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			margin-top: 50px;
+		}
+		.row {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.sub-row {
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-start;
+			align-items: flex-start;
+		}
+		.sub-row label {
+			margin-left: 4px;
+		}
+		.user-exists,
+		.error {
+			font-style: italic;
+			color: red;
+		}
+		input[type="text"],
+		input[type="password"],
+		input[type="email"] {
+			width: 200px;
+			height: 32px;
+			text-align: center;
+			border: 1px solid #333;
+			margin: 5px;
+			border-radius: 5px;
+		}
+		input[type="submit"] {
+			width: 200px;
+			height: 32px;
+			text-align: center;
+			margin: 5px;
+			border-radius: 5px;
+			border: none;
+			/*outline: 2px solid lightblue;*/
+		}
+		input[type="text"]:focus,
+		input[type="password"]:focus,
+		input[type="email"]:focus {
+			border: 1px;
+			outline: 2px solid lightblue;
+		}
+		.btn-submit {
+			cursor: pointer;
+			transition: all 0.15s;
+			border: none !important;
+			background-color: #53B9EE;
+		}
+		.btn-submit:focus {
+			/*transform: scale(1.02);*/
+			background-color: #72BFE7;
+			outline: 2px solid lightblue;
+		}
+		#show-hide-password {
+			width: 20px;
+			height: 20px;
+		}
+	</style>
+{% endblock %}
+
+{% block content %}
+	<form class="register-form" method="POST">
+		{% if user_exists %}
+			<p class="user-exists">{{ user_exists }}</p>
+		{% endif %}
+		<span class="error"></span>
+		<div class="row">
+			<div class="sub-row">
+				<label>Nome de usuario</label>
+				{{ form.username }}
+			</div>
+			<div class="sub-row">
+				<label>Primeiro Nome</label>
+				{{ form.first_name }}
+			</div>
+		</div>
+		<div class="row">
+			<div class="sub-row">
+				<label>Outros nomes</label>
+				{{ form.last_name }}
+			</div>
+			<div class="sub-row">
+				<label>Email</label>
+				{{ form.email }}
+			</div>
+		</div>
+		<div class="row">
+			<div class="sub-row">
+				<label>Senha</label>
+				{{ form.password }}
+			</div>
+			<div class="sub-row">
+				<label>Confirmar senha</label>
+				{{ form.confirm_password }}
+			</div>
+		</div>
+		<div class="row">
+			<div class="sub-row">
+				<label>Numero de telefone</label>
+				{{ form.phone_number }}
+			</div>
+			<div class="sub-row">
+				<label>Morada</label>
+				{{ form.location }}
+			</div>
+		</div>
+		{% csrf_token %}
+		<div class="password-checkbox">
+			<label for="show-hide-password"><span class="show-hide-text">Mostrar</span> password</label>
+			<input type="checkbox" id="show-hide-password" class="show-hide-password" >
+		</div>
+		<input type="submit" class="btn-submit" value="Cadastre-se">
+
+		<div class="user-does-not-exists">
+			<p>Se ja possue uma conta, pode fazer o <a href="{% url 'client:login' %}">LOGIN</a></p>
+		</div>
+	</form>
+{% endblock %}
+
+{% block javascript %}
+	<script>
+		let show_hide_password = document.querySelector('#show-hide-password');
+		let password1 = document.querySelector('#id_password');
+		let password2 = document.querySelector('#id_confirm_password');
+		let show_hide_text = document.querySelector('.show-hide-text');
+		let error = document.querySelector('.error');
+		let username = document.querySelector('#id_username');
+		username.focus();
+
+		show_hide_password.addEventListener('click', e => {
+			hideDisplayPassword(password1);
+			hideDisplayPassword(password2);
+		});
+
+		checkPasswordMatch(password1, password2);
+		checkPasswordMatch(password2, password1);
+		function checkPasswordMatch(tag1, tag2) {
+			tag1.addEventListener('input', e => {
+				if (e.target.value !== tag2.value) {
+					error.textContent = 'Passwords do not match';
+				} else {
+					error.textContent = '';
+				}
+			})
+		}
+
+		password1.addEventListener('input', e => {
+			if (e.target.value !== password2) {
+
+			}
+		})
+
+		function hideDisplayPassword(tag) {
+			if (tag.type === "password") {
+				tag.type = "text";
+				show_hide_text.textContent = 'Ocultar'
+			} else {
+				tag.type = "password";
+				show_hide_text.textContent = 'Mostrar'
+			}
+		}
+	</script>
+{% endblock %}
+

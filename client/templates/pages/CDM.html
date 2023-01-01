@@ -1,0 +1,240 @@
+{% extends 'pages/homepage.html' %}
+{% load replace_ %}
+{% load static %}
+
+{% block title %}
+	<title>Analise de Investimentos - {{ page }}</title>
+{% endblock %}
+
+{% block style %}
+	<style>
+		.left-div {
+			display: flex;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: flex-start;
+			border-bottom: 2px solid #ccc;
+			width: 100%;
+			min-width: 800px;
+		}
+		.right-section-options {
+			margin-top: 20px;
+		}
+		.left {
+			display: flex;
+			text-align: center;
+			justify-content: center;
+			align-items: center;
+			width: 150px;
+			font-weight: bold;
+			height: 100px;
+			border: 1px solid #ccc;
+		}
+		.right-section-right {
+			margin-top: 10px;
+			margin-left: 5px;
+			padding-bottom: 3px;
+			margin-right: 20px;
+			width: 200px;
+			border-bottom: 4px solid teal;
+			background-color: rgba(0,89,138,.12);
+		}
+		.cotacao {
+
+		}
+		.option {
+			border-bottom: 1px solid #ccc;
+			font-size: 14px;
+		}
+		.var-diaria {
+			/*margin-top: 10px;*/
+		}
+		.middle-option {
+			margin-top: 10px;
+			margin-bottom: 10px;
+		}
+		.option-title {
+			background-color: #E4902D;
+		}
+		.var-6meses {
+			margin-bottom: 10px !important;
+		}
+		.valor-actual {
+			margin-top: 10px !important;
+		}
+		.indicatores-de-valution {
+			
+		}
+		.second-row {
+			height: 200px;
+		}
+		.action-logo {
+			width: 20px;
+			height: 20px;
+		}
+		.left-row {
+
+		}
+		select {
+			height: 30px;
+			width: 180px;
+			margin-left: 10px;
+		}
+	</style>
+{% endblock %}
+
+{% block section %}
+	<div class="investiments-analysis">
+		<div class="left-section">
+			<h3>Analise de Investimentos (Accoes)</h3>
+			<!--<select>
+				{% for div_ in titles %}
+					<option>
+						<a href="{% url 'client:investiments_analysis' div_ %}" class="{{ div_ }} accoes-div">
+							<span class="span-text action-name">{{ div_ }}</span>
+							<img class="action-logo" src="{% static "cdm.jpg" %}">
+						</a>
+					</option>
+				{% endfor %}
+			</select>
+		-->
+			
+			{% for div_ in titles %}
+				<a href="{% url 'client:investiments_analysis' div_ %}" class="{{ div_ }} accoes-div">
+					<span class="span-text action-name">{{ div_ }}</span>
+					<img class="action-logo" src="{% static "cdm.jpg" %}">
+				</a>
+			{% endfor %}
+		</div>
+		<div class="right-section">
+			<h3 class="acction-title">Incadores de Performance ({{ page }})</h3>
+			<div class="right-section-options">
+				<div class="left-div cotacao first-row">
+					<div class="left">Cotacao</div>
+					<div class="right-section-right left-row">
+						<div class="option">
+							<span class="span-text option-title valor-actual">Valor Actual</span>
+							<span class="span-text option-value">MZN 60.00</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Var. Diaria</span>
+							<span class="span-text option-value">0.00%</span>
+						</div>
+						<div class="option var-diaria">
+							<span class="span-text option-title">Var. Semanal</span>
+							<span class="span-text option-value">19.98%</span>
+						</div>
+					</div>
+
+
+					<div class="right-section-right">
+						<div class="option var-diaria">
+							<span class="span-text option-title">Var. Mensal</span>
+							<span class="span-text option-value">71.43%</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Var. 6meses</span>
+							<span class="span-text option-value">-7.69%</span>
+						</div>
+						<div class="option var-diaria">
+							<span class="span-text option-title">Var Med. Dia</span>
+							<span class="span-text option-value">0.44%</span>
+						</div>
+					</div>
+
+
+					<div class="right-section-right">
+						<div class="option var-diaria">
+							<span class="span-text option-title">Var Med. Mensal</span>
+							<span class="span-text option-value">1.27%</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Min 12</span>
+							<span class="span-text option-value">MZN 35.00</span>
+						</div>
+						<div class="option var-diaria">
+							<span class="span-text option-title">Max 12 meses</span>
+							<span class="span-text option-value">MZN 90.00</span>
+						</div>
+					</div>
+
+				</div>
+
+				<div class="left-div indicatores-de-valution second-row left-row">
+					<div class="left second-row">Indicadores de Valuation</div>
+					<div class="right-section-right">
+						<div class="option">
+							<span class="span-text option-title valor-actual">Div/Ac.</span>
+							<span class="span-text option-value">MZN 0.00</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">P/L</span>
+							<span class="span-text option-value">6.38</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">LPA</span>
+							<span class="span-text option-value">MZN 9.41</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">P/EBITIDA</span>
+							<span class="span-text option-value">P/EBITIDA</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Div. Yield</span>
+							<span class="span-text option-value">0.0%</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">P/EBIT</span>
+							<span class="span-text option-value">2.8</span>
+						</div>
+					</div>
+
+
+					<div class="right-section-right">
+						<div class="option">
+							<span class="span-text option-title valor-actual">VAP</span>
+							<span class="span-text option-value">MZN 108.10</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">P/Activos</span>
+							<span class="span-text option-value">MZN 0.34</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">P/SR</span>
+							<span class="span-text option-value">MZN 0.46</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">EV/EBITDA</span>
+							<span class="span-text option-value">EV/EBITADA</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">P/Cap. Giro</span>
+							<span class="span-text option-value">-MZN 1.89</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">P/C.Circ.LiQ</span>
+							<span class="span-text option-value">-MZN 1.79</span>
+						</div>
+					</div>
+				</div>
+				<div class="left-div">
+					<div class="left">Indicadores de Rentabilidade</div>
+				</div>
+				<div class="left-div">
+					<div class="left">Indicadores de Endividamento</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascript %}
+	<script>
+		$(document).ready(function() {
+			$('.accoes-div').click(function(){
+				console.log('Hello')
+				$('.accoes-div').addClass('highlight');
+			});
+		});
+	</script>
+{% endblock %}

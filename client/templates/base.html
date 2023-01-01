@@ -1,0 +1,179 @@
+{% load static %}
+{% load replace_ %}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<link rel="icon"href="{% static 'logo.png' %}">
+	{# <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet"> #}
+	<link rel="stylesheet" type="text/css" href="{% static "roboto2.css" %}">
+	{% block title %}
+		<title></title>
+	{% endblock %}
+	{% block style %}{% endblock %}
+	<style>
+		html, body {
+		    background-color: #F6FBFB;
+		    font-family: 'Roboto', sans-serif;
+			font-family: Verdana, Geneva, sans-serif;
+			/*color: #4BD8D3;*/
+			/*opacity: 0.9;*/
+			/*background-image: url("{% static 'background.jpg' %}");
+			background-size: cover;
+			background-repeat: no-repeat;*/
+		}
+		.container {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			margin: auto;
+			width: 100%;
+		}
+		.header-li {
+			background: linear-gradient(-90deg,rgba(0,89,138,.9) 0%,rgba(4,171,148,.9) 100%);
+			/*background: linear-gradient(to right, #355c7d, #6c5b7b, #c06c84);*/
+			/*background: linear-gradient(to right, #cc95c0, #dbd4b4, #7aa1d2);*/
+			display: flex;
+			width: 100%;
+			justify-content: space-around;
+			align-items: center;
+			margin-top: 0px;
+			/*margin-bottom: 200px;*/
+			position: fixed;
+			top: 0;
+			height: 50px;
+		}
+		.header-li a {
+			color: #ccc;
+			cursor: pointer;
+		}
+		.header-li a:hover {
+			text-decoration: underline;
+		}
+		.investiments-analysis {
+			display: flex;
+			flex-wrap: wrap;
+			width: 100%;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: flex-start;
+			margin-top: 40px;
+			padding: 0px;
+		}
+		.accoes-div {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			background-color: #CCEEF5;
+			margin-bottom: 5px;
+			text-align: left;
+			width: 170px;
+			height: 25px;
+			font-size: 10px;
+			padding-left: 5px;
+			padding-right: 5px;
+			text-decoration: none;
+			border-radius: 5px;
+			transition: all 0.3s;
+		}
+		.accoes-div:hover {
+			background-color: lightblue;
+			/*transform: scale(1.02);*/
+			/*border: 1px solid #ccc;*/
+		}
+		.accoes-div:focus {
+
+		}
+		.accoes-div:active {
+			/*font-weight: bold;*/
+
+		}
+		.left-section {
+			width: 20%;
+			/*margin-right: 50px;*/
+			margin-left: 100px;
+		}
+		.left-section h3 {
+			font-size: 14px;
+		}
+		@media only screen and (min-width: 900px) {
+			.left-section {
+				position: fixed;
+				left: 0;
+			}
+			.right-section {
+				margin-left: 170px;
+			}
+		}
+		@media only screen and (max-width: 900px) {
+			.left-section {
+				display: flex;
+				flex-direction: row;
+				flex-wrap: wrap;
+				justify-content: space-between;
+				align-items: flex-start;
+				width: 100%;
+			}
+			.right-section {
+				width: 100%;
+			}
+			.accoes-div {
+				display: flex;
+				justify-content: flex-start;
+				align-items: flex-start;
+				text-align: left;
+				text-decoration: none;
+			}
+		}
+		.right-section {
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-start;
+			align-items: flex-start;
+			width: 70%;
+			min-width: 400px;
+		}
+		.highlight {     
+			font-weight: bold;
+		}
+		.acction-title {
+			text-align: center;
+			margin-left: 50px;
+		}
+		.site-logo {
+			width: 50px;
+			height: 40px;
+			border-radius: 55%;
+		}
+		.span-text {
+			/*color: black;*/
+		}
+		.action-logo {
+			width: 15px;
+			height: 15px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="header-li">
+			<a href="{% url "client:homepage" %}">
+				<img class="site-logo" src="{% static 'logo.png' %}">
+			</a>
+			<a href="{% url 'client:only_page' 'CDM' %}">Accoes</a>
+			<a href="{% url 'client:homepage' %}">Obrigacoes</a>
+			<a href="{% url 'client:papel_commercial' %}">Papel Comercial</a>
+			<a href="{% url "client:profile" %}">Perfil</a>
+			<a href="{% url "client:logout" %}">Logout</a>
+		</div>
+
+		{% block content %}
+		{% endblock %}
+	</div>
+
+	<script src="{% static 'jquery-3.6.2.min.js' %}"></script>
+	{% block javascript %}
+	{% endblock %}
+</body>
+</html>
