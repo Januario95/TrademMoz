@@ -226,7 +226,7 @@ def register_page(request):
 					location=location
 				)
 				client.save()
-				return redirect('/homepage/')
+				return redirect('/')
 				# print('User does not exists')
 				# # print(name)
 				# print(email)
