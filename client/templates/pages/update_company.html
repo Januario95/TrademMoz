@@ -1,0 +1,150 @@
+{% extends 'pages/homepage.html' %}
+{% load replace_ %}
+{% load static %}
+
+{% block title %}
+	<title>Analise de Investimentos - {{ page }}</title>
+{% endblock %}
+
+{% block style %}
+	<style>
+		.left-div {
+			display: flex;
+			flex-direction: row;
+			justify-content: flex-start;
+			align-items: flex-start;
+			border-bottom: 2px solid #ccc;
+			width: 100%;
+			min-width: 800px;
+		}
+		.right-section-options {
+			margin-top: 20px;
+		}
+		.left {
+			display: flex;
+			text-align: center;
+			justify-content: center;
+			align-items: center;
+			width: 150px;
+			font-weight: bold;
+			height: 100px;
+			border: 1px solid #ccc;
+		}
+		.right-section-right {
+			margin-top: 10px;
+			margin-left: 5px;
+			padding-bottom: 3px;
+			margin-right: 20px;
+			width: 200px;
+			border-bottom: 4px solid teal;
+			background-color: rgba(0,89,138,.12);
+		}
+		.cotacoes-table {
+			border-collapse: collapse;
+			width: 100%
+		}
+		.cotacoes-table td,
+		.cotacoes-table th {
+			border: 1px solid #ccc;
+			padding: 5px;
+			font-size: 14px;
+		}
+		input[type="text"],
+		input[type="number"],
+		select {
+			width: 200px;
+			height: 32px;
+			text-align: center;
+			border: 1px solid #333;
+			margin: 5px;
+			border-radius: 5px;
+		}
+		input[type="submit"] {
+			width: 200px;
+			height: 32px;
+			text-align: center;
+			margin: 5px;
+			border-radius: 5px;
+			border: 1px solid #333;
+			cursor: pointer;
+		}
+		.companies {
+			max-height: 250px;
+			width: 210px;
+			overflow-y: scroll;
+		}
+		#id_nome_da_empresa {
+			text-align: left;
+		}
+	</style>
+{% endblock %}
+
+{% block section %}
+	<div class="investiments-analysis">
+		<div class="left-section">
+			<h3>Analise de Investimentos (Accoes)</h3>
+			<div class="companies">
+				{% for div_ in titles %}
+					<a href="{% url 'client:update_company' div_ %}" class="{{ div_ }} accoes-div">
+						<span class="span-text action-name">{{ div_ }}</span>
+						<img class="action-logo" src="{% static "cdm.jpg" %}">
+					</a>
+				{% endfor %}
+			</div>
+		</div>
+		<div class="right-section">
+			<div class="right-section-top">
+				<form method="post">
+					{{ form.as_p }}
+					{% csrf_token %}
+					<input type="submit" id="add-accao" value="Adicionar Accao" name="">
+				</form>
+				<br>
+			</div>
+			<table class="cotacoes-table">
+				{% if request.user.is_superuser %}
+					<thead>
+						<tr>
+							<!--<th>ID</th>-->
+							<th style="width:100px;">Data</th>
+							<th>Nome da Empresa</th>
+							<th>Preco da Accao</th>
+							<th>Valor Do Mercado</th>
+							<th>EV</th>
+							<th>Variacao Diaria</th>
+							<th>Variacao Semanal</th>
+							<th>Variacao Mensal</th>
+							<th>Variacao Semestral</th>
+							<th>Edit/Delete</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for cotacao in cotacoes %}
+							<tr>
+								<!--<td>{{ cotacao.id }}</td>-->
+								<td>{{ cotacao.date|date:"M d, Y" }}</td>
+								<td>{{ cotacao.nome_da_empresa }}</td>
+								<td>{{ cotacao.preco_da_acao }}</td>
+								<td>{{ cotacao.Valor_Do_Mercado|remove_zeros }}</td>
+								<td>{{ cotacao.EV|remove_zeros }}</td>
+								<td>{{ cotacao.Variacao_Diaria|format_none }}</td>
+								<td>{{ cotacao.Variacao_Semanal|format_none }}</td>
+								<td>{{ cotacao.Variacao_Mensal|format_none }}</td>
+								<td>{{ cotacao.Variacao_Semestral|format_none }}</td>
+								<td>
+									<a href="{% url 'client:delete_cotacao' cotacao.pk  %}">Delete</a>
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			{% endif %}
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascript %}
+	<script>
+		let id_nome_da_empresa = document.querySelector('#id_nome_da_empresa');
+	</script>
+{% endblock %}

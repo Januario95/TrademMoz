@@ -7,7 +7,9 @@ from .views import (
 	logout_page, homepage,
 	investiments_analysis, cdn_page,
 	papel_commercial,
-	only_page,
+	only_page, update_company,
+	delete_cotacao, get_cotacao,
+	get_compay_names_and_ids,
 )
 
 from .api_views import (
@@ -23,6 +25,13 @@ app_name = 'client'
 urlpatterns = [
 	# path('', include(router.urls)),
 
+	path('get_compay_names_and_ids/',
+		 get_compay_names_and_ids),
+	path('get_cotacao/<int:pk>/', get_cotacao),
+	path('delete_cotacao/<int:pk>/', delete_cotacao,
+		 name='delete_cotacao'),
+	path('update_company/<str:company_name>/', 
+		 update_company, name='update_company'),
 	path('only_page/<str:page>/', only_page, name='only_page'),
 	path('papel_commercial/', papel_commercial,
 		 name='papel_commercial'),
@@ -36,5 +45,7 @@ urlpatterns = [
 	path('login/', login_page, name='login'),
 	path('logout/', logout_page, name='logout'),
 ]
+
+
 
 

@@ -2,9 +2,17 @@ from django import forms
 from django.contrib.auth.models import User
 
 from .models import (
-	Client,
+	Client, CotacoesDasAcoes,
 )
 
+
+class CotacoesDasAcoesForm(forms.ModelForm):
+	# date = forms.DateField()
+	
+	class Meta:
+		model = CotacoesDasAcoes
+		fields = '__all__'
+		
 
 class LoginForm(forms.Form):
 	username = forms.CharField(max_length=255)

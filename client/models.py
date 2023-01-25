@@ -17,6 +17,12 @@ class Company(models.Model):
 		verbose_name = 'Company'
 		verbose_name_plural = 'Companies'
 
+	def serialize(self):
+		data = {
+			'id': self.id,
+			'name': self.name
+		}
+
 class CotacoesDasAcoes(models.Model):
 	date = models.DateField(blank=True)
 	# nome_da_empresa = models.CharField(max_length=150)
@@ -41,6 +47,36 @@ class CotacoesDasAcoes(models.Model):
 	def __str__(self):
 		return f'{self.nome_da_empresa} - {self.date} - {self.preco_da_acao}'
 
+	def P_L(self):
+		try:
+			year = self.date.strftime('%Y')
+			accao = CotacoesDasAcoes.objects.get(
+				date=self.date,
+				nome_da_empresa=self.nome_da_empresa
+			) # .last()
+			value = DemonstracaoDeResultados.objects.filter(
+				nome_da_empresa=self.nome_da_empresa).last()
+			# print(value)
+			result = accao.preco_da_acao / value.lucro_por_acao()
+			return round(result, 2)
+		except Exception as e:
+			# print(e.args)
+			return None
+
+	def dividendo_por_acao_ultimo_valor(self, nome_da_empresa):
+		try:
+			# year = datetime.strptime(self.date, '%Y').date().year
+			year = self.date.strftime('%Y')
+			value = DemonstracaoDeResultados.objects.filter(
+				# ano=int(year),
+				nome_da_empresa=nome_da_empresa).last()
+
+			value = value.dividendo_declarados_e_pagos / value.numero_medio_ponderado_de_acoes
+			return round(value, 2)
+		except Exception as e:
+			# print(e.args)
+			return None
+
 	def Variacao_Semestral(self):
 		try:
 			preco_da_acao_hoje = self.preco_da_acao
@@ -52,35 +88,43 @@ class CotacoesDasAcoes(models.Model):
 			result = round(((first - 1) * 100), 2)
 			return result
 		except Exception as e:
-			print(e)
+			# print(e.args)
 			return None
 
 	def Variacao_Mensal(self):
 		try:
-			preco_da_acao_hoje = self.preco_da_acao
-			preco_da_acao_ontem = CotacoesDasAcoes.objects.get(
+			preco_da_acao_actual = self.preco_da_acao
+			preco_da_acao_a_30_dias = CotacoesDasAcoes.objects.get(
 				date=self.date-timedelta(days=30),
 				nome_da_empresa=self.nome_da_empresa
 			).preco_da_acao
-			first = preco_da_acao_hoje / preco_da_acao_ontem
+			# print(f'date_de_hoje = {self.date}')
+			# print(f'date_a_30_dias = {self.date-timedelta(days=30)}')
+			# print(f'preco_da_acao_actual = {preco_da_acao_actual}')
+			# print(f'preco_da_acao_a_30_dias = {preco_da_acao_a_30_dias}')
+			first = preco_da_acao_actual / preco_da_acao_a_30_dias
 			result = round(((first - 1) * 100), 2)
 			return result
 		except Exception as e:
-			print(e)
+			# print(e.args)
 			return None
 
 	def Variacao_Semanal(self):
 		try:
-			preco_da_acao_hoje = self.preco_da_acao
-			preco_da_acao_ontem = CotacoesDasAcoes.objects.get(
-				date=self.date-timedelta(days=7),
+			preco_da_acao_actual = self.preco_da_acao
+			preco_da_acao_a_sete_dias = CotacoesDasAcoes.objects.get(
+				date=self.date-timedelta(days=6),
 				nome_da_empresa=self.nome_da_empresa
 			).preco_da_acao
-			first = preco_da_acao_hoje / preco_da_acao_ontem
+			# print(f'date_de_hoje = {self.date}')
+			# print(f'date_a_sete_dias = {self.date-timedelta(days=7)}')
+			# print(f'preco_da_acao_actual = {preco_da_acao_actual}')
+			# print(f'preco_da_acao_a_sete_dias = {preco_da_acao_a_sete_dias}')
+			first = preco_da_acao_actual / preco_da_acao_a_sete_dias
 			result = round(((first - 1) * 100), 2)
 			return result
 		except Exception as e:
-			print(e)
+			# print(e.args)
 			return None
 
 	def Variacao_Diaria(self):
@@ -94,44 +138,85 @@ class CotacoesDasAcoes(models.Model):
 			result = round(((first - 1) * 100), 2)
 			return result
 		except Exception as e:
-			print(e)
+			# print(e.args)
+			return None
+
+	def EV_EBIT(self):
+		try:
+			EBIT = DemonstracaoDeResultados.objects.filter(
+				ano=int(self.date.year)-1,
+				nome_da_empresa=self.nome_da_empresa)
+			if EBIT.exists():
+				# print('EXISTS')
+				EBIT = EBIT.first()
+				EBIT = EBIT.EBIT
+				# print(f'EBIT = {EBIT}')
+				# print(f'EV = {self.EV()}')
+				result = self.EV() / EBIT
+				# print(f'EV_EBIT = {result}')
+				return round(result, 2)
+			else:
+				# print('DOES NOT EXIST')
+				return None
+		except Exception as e:
+			# print(e)
 			return None
 
 	def EV(self):
 		try:
-			balanco = Balanco.objects.get(ano=self.date.year-1)
-			divida_liquida = TableDeDivida.objects.get(balanco=balanco).divida_liquida()
+			balanco = Balanco.objects.last() # get(ano=self.date.year-1)
+			# print(f'ano = {self.date}')
+			divida_liquida = TableDeDivida.objects.filter(
+				# ano.self.date.year,
+				nome_da_empresa=self.nome_da_empresa
+			).last().divida_liquida()
 			Valor_Do_Mercado = self.Valor_Do_Mercado()
-			return divida_liquida + Valor_Do_Mercado
+			# print(f'divida_liquida = {divida_liquida}')
+			# print(f'Valor_Do_Mercado = {Valor_Do_Mercado}')
+			result = divida_liquida + Valor_Do_Mercado
+			# print(f'EV = {result}')
+			return result
 		except Exception as e:
-			print(e)
+			# print(e.args)
 			return None
 
 	def Valor_Do_Mercado(self):
 		try:
-			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.date.year-1).numero_medio_ponderado_de_acoes
-			return self.preco_da_acao * numero_medio_ponderado_de_acoes
+			accoes = CotacoesDasAcoes.objects.get(
+				date=self.date,
+				nome_da_empresa=self.nome_da_empresa
+			)
+			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.filter(
+				ano=int(self.date.year)-1,
+				nome_da_empresa=self.nome_da_empresa)# .numero_medio_ponderado_de_acoes
+			# print(f'DATE = {self.date}')
+			if numero_medio_ponderado_de_acoes.exists():
+				# print('EXISTS')
+				numero_medio_ponderado_de_acoes = numero_medio_ponderado_de_acoes.first().numero_medio_ponderado_de_acoes
+				return self.preco_da_acao * numero_medio_ponderado_de_acoes
+			else:
+				return None
+				# print('DOES NOT EXIST')
 		except Exception as e:
-			print(e)
+			# print('ERROR STARTS HERE')
+			# print(e.args)
+			# print('ERROR ENDS HERE')
 			return None
 
 
 class MetricasPorAccao(models.Model):
 	ano = models.CharField(
 		max_length=50, blank=True,
-		default='2015', unique=True)
-	nome_da_empresa = models.CharField(
-		max_length=150, blank=True,
-		default='CDM')
+		default='2015')
+	nome_da_empresa = models.ForeignKey(
+		to=Company, on_delete=models.CASCADE,
+		blank=True)
+	# nome_da_empresa = models.CharField(
+	# 	max_length=150, blank=True,
+	# 	default='CDM')
 
 	class Meta:
-		ordering = ('ano',)
-
-	def EV_EBITDA(self):
-		return None
-
-	def EV_EBIT(self):
-		return None
+		ordering = ('-ano',)
 
 	def P_Capital_De_Giro_Liquido(self):
 		year = datetime.strptime(self.ano, '%Y').date().year
@@ -144,60 +229,64 @@ class MetricasPorAccao(models.Model):
 			date = round(date.last().preco_da_acao, 2)
 			return round(date / Capital_de_Giro_Liquido, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def P_Capital_De_Giro(self):
-		year = datetime.strptime(self.ano, '%Y').date().year
-		nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
-		date = CotacoesDasAcoes.objects.filter(
-			nome_da_empresa=nome_da_empresa
-		)
-		Capital_de_Giro = self.Capital_de_Giro()
 		try:
+			year = datetime.strptime(self.ano, '%Y').date().year
+			nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
+			date = CotacoesDasAcoes.objects.filter(
+				nome_da_empresa=nome_da_empresa
+			)
+			Capital_de_Giro = self.Capital_de_Giro()
+		
 			date = round(date.last().preco_da_acao, 2)
 			return round(date / Capital_de_Giro, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def PSR(self):
-		year = datetime.strptime(self.ano, '%Y').date().year
-		nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
-		date = CotacoesDasAcoes.objects.filter(
-			nome_da_empresa=nome_da_empresa
-		)
-		Vendas_Liquidas = self.Vendas_Liquidas()
 		try:
+			year = datetime.strptime(self.ano, '%Y').date().year
+			nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
+			date = CotacoesDasAcoes.objects.filter(
+				nome_da_empresa=nome_da_empresa
+			)
+			Vendas_Liquidas = self.Vendas_Liquidas()
+
 			date = round(date.last().preco_da_acao, 2)
 			return round(date / Vendas_Liquidas, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Dividend_Yield(self):
-		year = datetime.strptime(self.ano, '%Y').date().year
-		nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
-		date = CotacoesDasAcoes.objects.filter(
-			nome_da_empresa=nome_da_empresa
-		)
-		dividendo_por_acao = DemonstracaoDeResultados.objects.get(ano=year).dividendo_por_acao()
 		try:
+			year = datetime.strptime(self.ano, '%Y').date().year
+			nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
+			date = CotacoesDasAcoes.objects.filter(
+			nome_da_empresa=nome_da_empresa
+			)
+			dividendo_por_acao = DemonstracaoDeResultados.objects.get(ano=year,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).dividendo_por_acao()
+
 			date = round(date.last().preco_da_acao, 2)
 			return round((dividendo_por_acao / date) * 100, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
-	def EBIT_ACTOVOS(self):
-		EBIT_ = self.EBIT_()
-		Activos = self.Activos()
-		DemonstracaoDeResultados
-
+	def EBIT_ACTIVOS(self):
 		try:
-			return round((EBIT_ / Activos) * 100, 2)
+			EBIT_ = self.EBIT_()
+			Activos = self.Activos()
+			result =  round((EBIT_ / Activos) * 100, 2)
+			# print(f'EBIT = {EBIT_}.\tActivos = {Activos}.\tEBIT_ACTIVOS = {result}')
+			return result
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def P_ACTIVO(self):
@@ -211,195 +300,278 @@ class MetricasPorAccao(models.Model):
 			Activos = round(self.Activos(), 2)
 			return round(date / Activos, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def P_EBITDA(self):
 		return None
 
 	def P_EBIT(self):
-		year = datetime.strptime(self.ano, '%Y').date().year
-		nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
-		date = CotacoesDasAcoes.objects.filter(
-			nome_da_empresa=nome_da_empresa
-		)
 		try:
+			year = datetime.strptime(self.ano, '%Y').date().year
+			nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
+			date = CotacoesDasAcoes.objects.filter(
+				nome_da_empresa=nome_da_empresa
+			)
+
 			date = round(date.last().preco_da_acao, 2)
-			EBIT = round(self.EBIT_(), 2)
+			EBIT = round(self.EBIT_(), 4)
 			return round(date / EBIT, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
+			return None
+
+	def VPA(self):
+		# print('VPA')
+		# print(f'ANO = {self.ano}')
+		try:
+			total_do_capital_proprio = Balanco.objects.filter(
+				ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).last().total_do_capital_proprio()
+			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.filter(ano=self.ano,
+					nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).last().numero_medio_ponderado_de_acoes
+			result = total_do_capital_proprio / numero_medio_ponderado_de_acoes
+			# print(f'total_do_capital_proprio = {total_do_capital_proprio}')
+			# print(f'numero_medio_ponderado_de_acoes = {numero_medio_ponderado_de_acoes}')
+			return result
+		except Exception as e:
+			# print(e.args)
 			return None
 
 	def P_VPA(self):
-		year = datetime.strptime(self.ano, '%Y').date().year
-		nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
-		date = CotacoesDasAcoes.objects.filter(
-			nome_da_empresa=nome_da_empresa
-		)
 		try:
+			year = datetime.strptime(self.ano, '%Y').date().year
+			nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
+			date = CotacoesDasAcoes.objects.filter(
+				nome_da_empresa=nome_da_empresa
+			)
+
 			date = round(date.last().preco_da_acao, 2)
 			VPL = round(self.VPL(), 2)
 			return round(date / VPL, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def P_L(self):
-		year = datetime.strptime(self.ano, '%Y').date().year
-		nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
-		date = CotacoesDasAcoes.objects.filter(
-			nome_da_empresa=nome_da_empresa
-		)
 		try:
+			year = datetime.strptime(self.ano, '%Y').date().year
+			nome_da_empresa = Company.objects.get(name=self.nome_da_empresa)
+			date = CotacoesDasAcoes.objects.filter(
+				nome_da_empresa=nome_da_empresa
+			)
 			date = round(date.last().preco_da_acao, 2)
-			LPA = round(self.LPA(), 2)
-			return round(date / LPA, 2)
+			LPA = round(self.LPA(), 4)
+			result = round(date / LPA, 2)
+			# print(f'preco_da_acao = {date}.\tLPA = {LPA}.\tP_L = {result}')
+			return result
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Capital_de_Giro_Liquido(self):
 		try:
-			activo_corrente = Balanco.objects.get(ano=self.ano).activo_corrente
-			passivo_corrente = Balanco.objects.get(ano=self.ano).passivo_corrente
-			passivo_nao_corrente = Balanco.objects.get(ano=self.ano).passivo_nao_corrente
-			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano).numero_medio_ponderado_de_acoes
+			activo_corrente = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).activo_corrente
+			passivo_corrente = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).passivo_corrente
+			passivo_nao_corrente = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).passivo_nao_corrente
+			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).numero_medio_ponderado_de_acoes
 			result = round(((activo_corrente - passivo_corrente - passivo_nao_corrente) / numero_medio_ponderado_de_acoes), 2)
 			return result
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Capital_de_Giro(self):
 		try:
-			activo_corrente = Balanco.objects.get(ano=self.ano).activo_corrente
-			passivo_corrente = Balanco.objects.get(ano=self.ano).passivo_corrente
-			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano).numero_medio_ponderado_de_acoes
+			activo_corrente = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).activo_corrente
+			passivo_corrente = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).passivo_corrente
+			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).numero_medio_ponderado_de_acoes
 			result = round(((activo_corrente - passivo_corrente) / numero_medio_ponderado_de_acoes), 2)
 			return result
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Vendas_Liquidas(self):
-		vendas = DemonstracaoDeResultados.objects.get(ano=self.ano).vendas
-		numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano).numero_medio_ponderado_de_acoes
 		try:
+			vendas = DemonstracaoDeResultados.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).vendas
+			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).numero_medio_ponderado_de_acoes
+		
 			result = round(vendas / numero_medio_ponderado_de_acoes, 2)
 			return result
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Activos(self):
-		total_de_activo = Balanco.objects.get(ano=self.ano).total_de_activo()
-		numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano).numero_medio_ponderado_de_acoes
 		try:
+			total_de_activo = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).total_de_activo()
+			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).numero_medio_ponderado_de_acoes
+		
 			result = round(total_de_activo / numero_medio_ponderado_de_acoes, 2)
 			return result
 		except Exception as e:
-			print(self.ano)
-			# print(e)
+			# print(e.args)
 			return None
 
 	def EBITDA_(self):
 		return 'Sem registo'
 
 	def EBIT_(self):
-		EBIT = DemonstracaoDeResultados.objects.get(ano=self.ano).EBIT
-		numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano).numero_medio_ponderado_de_acoes
 		try:
-			result = round(EBIT / numero_medio_ponderado_de_acoes, 2)
+			EBIT = DemonstracaoDeResultados.objects.get(
+				ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).EBIT
+			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(
+				ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).numero_medio_ponderado_de_acoes
+		
+			result = round(EBIT / numero_medio_ponderado_de_acoes, 4)
 			return result
 		except Exception as e:
-			print(self.ano)
-			# print(e)
+			# print(e.args)
 			return None
 
-	def VPL(self):
-		total_do_capital_proprio = Balanco.objects.get(ano=self.ano).total_do_capital_proprio()
-		numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano).numero_medio_ponderado_de_acoes
+	def VPL_Nas_Acoes(self, nome_da_empresa):
 		try:
+			total_do_capital_proprio_ = Balanco.objects.filter(
+			nome_da_empresa=Company.objects.get(name=nome_da_empresa)).last()
+			total_do_capital_proprio = total_do_capital_proprio_.total_do_capital_proprio()
+			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.filter(
+				nome_da_empresa=Company.objects.get(name=nome_da_empresa)).last().numero_medio_ponderado_de_acoes
+
 			result = round(total_do_capital_proprio / numero_medio_ponderado_de_acoes, 2)
 			return result
 		except Exception as e:
-			print(self.ano)
-			# print(e)
+			# print('ERROR HERE...')
+			# print(e.args)
+			return None
+
+	def VPL(self):
+		try:
+			total_do_capital_proprio = Balanco.objects.get(
+				ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).total_do_capital_proprio()
+			numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(
+				ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).numero_medio_ponderado_de_acoes
+		
+			result = round(total_do_capital_proprio / numero_medio_ponderado_de_acoes, 2)
+			return result
+		except Exception as e:
+			# print(e.args)
 			return None
 
 	def LPA(self):
-		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano).lucro_liquido_depois_de_imposto
-		numero_medio_ponderado_de_acoes = DemonstracaoDeResultados.objects.get(ano=self.ano).numero_medio_ponderado_de_acoes
 		try:
-			result = round(lucro_liquido_depois_de_imposto / numero_medio_ponderado_de_acoes, 2)
+			obj = DemonstracaoDeResultados.objects.filter(
+			ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).last()
+			lucro_liquido_depois_de_imposto = obj.lucro_liquido_depois_de_imposto
+			numero_medio_ponderado_de_acoes = obj.numero_medio_ponderado_de_acoes
+			result = round(lucro_liquido_depois_de_imposto / numero_medio_ponderado_de_acoes, 4)
 			return result
 		except Exception as e:
-			print(self.ano)
-			# print(e)
+			# print(e.args)
 			return None
 
 
 class IndicadoresDeEndividamento(models.Model):
 	ano = models.CharField(
 		max_length=50, blank=True,
-		default='2015', unique=True)
+		default='2015')
+	nome_da_empresa = models.ForeignKey(to=Company,
+		on_delete=models.CASCADE, blank=True, null=True)
+
+	def __str__(self):
+		return f'{self.ano} - {self.nome_da_empresa}'
 
 	class Meta:
 		ordering = ('ano',)
 
 	def Divida_Bruta_Lucro_Liquido(self):
-		balanco = Balanco.objects.get(ano=self.ano)
-		divida_bruta = TableDeDivida.objects.get(balanco=balanco).divida_bruta
-		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano).lucro_liquido_depois_de_imposto
+		balanco = Balanco.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa))
+		divida_bruta = TableDeDivida.objects.get(
+			ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).divida_bruta
+		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).lucro_liquido_depois_de_imposto
 		try:
 			result = round(divida_bruta / lucro_liquido_depois_de_imposto, 2)
 			return result
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Divida_Liquido_Lucro_Liquido(self):
-		balanco = Balanco.objects.get(ano=self.ano)
-		divida_liquida = TableDeDivida.objects.get(balanco=balanco).divida_liquida()
-		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano).lucro_liquido_depois_de_imposto
+		balanco = Balanco.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa))
+		divida_liquida = TableDeDivida.objects.get(
+			ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).divida_liquida()
+		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).lucro_liquido_depois_de_imposto
 		try:
 			return round(divida_liquida / lucro_liquido_depois_de_imposto, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Divida_Liquido_EBITDA(self):
 		return 'Sem registo'
 
 	def Divida_Liquido_EBITD(self):
-		balanco = Balanco.objects.get(ano=self.ano)
-		divida_liquida = TableDeDivida.objects.get(balanco=balanco).divida_liquida()
-		EBIT = DemonstracaoDeResultados.objects.get(ano=self.ano).EBIT
+		balanco = Balanco.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa))
+		divida_liquida = TableDeDivida.objects.get(
+			ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).divida_liquida()
+		EBIT = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).EBIT
 		try:
 			return round(divida_liquida / EBIT, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Divida_Patrimonio_Liquido(self):
-		balanco = Balanco.objects.get(ano=self.ano)
-		divida_liquida = TableDeDivida.objects.get(balanco=balanco).divida_liquida()
-		total_do_capital_proprio = Balanco.objects.get(ano=self.ano).total_do_capital_proprio()
+		balanco = Balanco.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa))
+		divida_liquida = TableDeDivida.objects.get(
+			ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).divida_liquida()
+		total_do_capital_proprio = Balanco.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).total_do_capital_proprio()
 		try:
 			return round(divida_liquida / total_do_capital_proprio, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Divida_or_Activo_Total(self):
-		balanco = Balanco.objects.get(ano=self.ano)
-		divida_liquida = TableDeDivida.objects.get(balanco=balanco).divida_liquida()
-		total_de_activo = Balanco.objects.get(ano=self.ano).total_de_activo()
 		try:
+			balanco = Balanco.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa))
+			divida_liquida = TableDeDivida.objects.get(
+				ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).divida_liquida()
+			total_de_activo = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).total_de_activo()
 			return round(divida_liquida / total_de_activo, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Liquidez_Geral(self):
@@ -410,7 +582,7 @@ class IndicadoresDeEndividamento(models.Model):
 			total_de_passivo = total_de_passivo.first().total_de_passivo()
 			return round(total_de_activo / total_de_passivo, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Liquidez_Seca(self):
@@ -423,7 +595,7 @@ class IndicadoresDeEndividamento(models.Model):
 			passivo_corrente = passivo_corrente.first().passivo_corrente
 			return round((activo_corrente - inventarios) / passivo_corrente, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 	def Liquidez_Corrente(self):
@@ -434,14 +606,19 @@ class IndicadoresDeEndividamento(models.Model):
 			passivo_corrente = passivo_corrente.first().passivo_corrente
 			return round(activo_corrente / passivo_corrente, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 
 class IndicadoresDeCrescimento(models.Model):
 	ano = models.CharField(
 		max_length=50, blank=True,
-		default='2015', unique=True)
+		default='2015')
+	nome_da_empresa = models.ForeignKey(to=Company,
+		on_delete=models.CASCADE, blank=True, null=True)
+
+	def __str__(self):
+		return f'{self.ano} - {self.nome_da_empresa}'
 
 	class Meta:
 		ordering = ('ano',)
@@ -452,12 +629,12 @@ class IndicadoresDeCrescimento(models.Model):
 		vendas_ha_5_anos = DemonstracaoDeResultados.objects.filter(ano=year-4)
 		try:
 			vendas_agora = vendas_agora.first().vendas
-			print(f'vendas_agora = {vendas_agora}')
+			# print(f'vendas_agora = {vendas_agora}')
 			vendas_ha_5_anos = vendas_ha_5_anos.first().vendas
-			print(f'vendas_ha_5_anos = {vendas_ha_5_anos}')
+			# print(f'vendas_ha_5_anos = {vendas_ha_5_anos}')
 			return round(((float(vendas_agora / vendas_ha_5_anos) ** (1/4)) - 1) * 100, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 
@@ -467,12 +644,12 @@ class IndicadoresDeCrescimento(models.Model):
 		lucro_liquido_depois_de_imposto_ha_5_anos = DemonstracaoDeResultados.objects.filter(ano=year-4)
 		try:
 			lucro_liquido_depois_de_imposto_agora = lucro_liquido_depois_de_imposto_agora.first().lucro_liquido_depois_de_imposto
-			print(f'lucro_liquido_depois_de_imposto_agora = {lucro_liquido_depois_de_imposto_agora}')
+			# print(f'lucro_liquido_depois_de_imposto_agora = {lucro_liquido_depois_de_imposto_agora}')
 			lucro_liquido_depois_de_imposto_ha_5_anos = lucro_liquido_depois_de_imposto_ha_5_anos.first().lucro_liquido_depois_de_imposto
-			print(f'lucro_liquido_depois_de_imposto_ha_5_anos = {lucro_liquido_depois_de_imposto_ha_5_anos}')
+			# print(f'lucro_liquido_depois_de_imposto_ha_5_anos = {lucro_liquido_depois_de_imposto_ha_5_anos}')
 			return round(((float(lucro_liquido_depois_de_imposto_agora / lucro_liquido_depois_de_imposto_ha_5_anos) ** (1/4)) - 1) * 100, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 
@@ -483,106 +660,148 @@ class IndicadoresDeCrescimento(models.Model):
 		vendas_ha_5_anos = DemonstracaoDeResultados.objects.filter(ano=year-4)
 		try:
 			vendas_agora = vendas_agora.first().vendas
-			print(f'vendas_agora = {vendas_agora}')
+			# print(f'vendas_agora = {vendas_agora}')
 			vendas_ha_5_anos = vendas_ha_5_anos.first().vendas
-			print(f'vendas_ha_5_anos = {vendas_ha_5_anos}')
+			# print(f'vendas_ha_5_anos = {vendas_ha_5_anos}')
 			return round(((float(vendas_agora / vendas_ha_5_anos) ** (1/4)) - 1) * 100, 2)
 		except Exception as e:
-			# print(e)
+			# print(e.args)
 			return None
 
 
 class IndicadoresDeEficiencia(models.Model):
 	ano = models.CharField(
 		max_length=50, blank=True,
-		default='2015', unique=True)
+		default='2015')
+	nome_da_empresa = models.ForeignKey(to=Company,
+		on_delete=models.CASCADE, blank=True, null=True)
+
+	def __str__(self):
+		return f'{self.nome_da_empresa} - {self.ano}'
 
 	class Meta:
 		ordering = ('id',)
 
 	def margem_bruta(self):
-		lucros_bruto = DemonstracaoDeResultados.objects.get(ano=self.ano).lucros_bruto
-		vendas = DemonstracaoDeResultados.objects.get(ano=self.ano).vendas
+		lucros_bruto = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).lucros_bruto
+		vendas = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).vendas
 		try:
 			return round((lucros_bruto / vendas) * 100, 2)
 		except Exception as e:
+			# print(e.args)
 			return None
 
 	def margin_EBITIDA(self):
 		return 'Sem registo'
 
 	def margin_EBIT(self):
-		EBIT = DemonstracaoDeResultados.objects.get(ano=self.ano).EBIT
-		vendas = DemonstracaoDeResultados.objects.get(ano=self.ano).vendas
+		EBIT = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).EBIT
+		vendas = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).vendas
 		try:
 			return round((EBIT / vendas) * 100, 2)
 		except Exception as e:
+			# print(e.args)
 			return None
 
 	def margin_Liquida(self):
-		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano).lucro_liquido_depois_de_imposto
-		vendas = DemonstracaoDeResultados.objects.get(ano=self.ano).vendas
+		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).lucro_liquido_depois_de_imposto
+		vendas = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).vendas
 		try:
 			return round((lucro_liquido_depois_de_imposto / vendas) * 100, 2)
 		except Exception as e:
+			# print(e.args)
 			return None
 
 
 class IndicadoresDeRentabilidade(models.Model):
 	ano = models.CharField(
 		max_length=50, blank=True,
-		default='2015', unique=True)
+		default='2015')
+	nome_da_empresa = models.ForeignKey(
+		to=Company, on_delete=models.CASCADE,
+		blank=True, null=True)
+
+	def __str__(self):
+		return f'{self.ano} - {self.nome_da_empresa}'
 
 	class Meta:
 		ordering = ('id',)
 
 	def ROA(self):
-		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano).lucro_liquido_depois_de_imposto
-		total_de_activo = Balanco.objects.get(ano=self.ano).total_de_activo()
 		try:
+			lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).lucro_liquido_depois_de_imposto
+			total_de_activo = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).total_de_activo()
 			return round((lucro_liquido_depois_de_imposto / total_de_activo) * 100, 2)
 		except Exception as e:
+			# print(e.args)
 			return None
 
 	def ROE(self):
-		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano).lucro_liquido_depois_de_imposto
-		total_do_capital_proprio = Balanco.objects.get(ano=self.ano).total_do_capital_proprio()
 		try:
+			lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.filter(
+				ano=self.ano, nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)
+			).last()
+			total_do_capital_proprio = Balanco.objects.filter(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).last()
+
+			total_do_capital_proprio = total_do_capital_proprio.total_do_capital_proprio()
+			lucro_liquido_depois_de_imposto = lucro_liquido_depois_de_imposto.lucro_liquido_depois_de_imposto
 			return round((lucro_liquido_depois_de_imposto / total_do_capital_proprio) * 100, 2)
 		except Exception as e:
+			# print(e.args)
 			return None
 
 	def Roic(self):
-		EBIT = DemonstracaoDeResultados.objects.get(ano=self.ano).EBIT
-		lucro_antes_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano).lucro_antes_de_imposto
-		lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano).lucro_liquido_depois_de_imposto
-		balanco = Balanco.objects.get(ano=self.ano)
-		total_do_capital_proprio = balanco.total_do_capital_proprio()
-		divida_bruta = TableDeDivida.objects.get(balanco=balanco).divida_bruta
-		
 		try:
+			EBIT = DemonstracaoDeResultados.objects.get(ano=self.ano,
+			nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).EBIT
+			lucro_antes_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).lucro_antes_de_imposto
+			lucro_liquido_depois_de_imposto = DemonstracaoDeResultados.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).lucro_liquido_depois_de_imposto
+			balanco = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa))
+			total_do_capital_proprio = balanco.total_do_capital_proprio()
+			divida_bruta = TableDeDivida.objects.get(
+				ano=self.ano,
+				nome_da_empresa=self.nome_da_empresa
+			).divida_bruta
 			return round(((
 				EBIT - (lucro_antes_de_imposto - lucro_liquido_depois_de_imposto)
 			) / (
 				total_do_capital_proprio  + divida_bruta
 			)) * 100, 2)
 		except Exception as e:
+			# print(e.args)
 			return None
 
 	def Giro_dos_Activos(self):
-		vendas = DemonstracaoDeResultados.objects.get(ano=self.ano).vendas
-		total_de_activo = Balanco.objects.get(ano=self.ano).total_de_activo()
-		
 		try:
+			vendas = DemonstracaoDeResultados.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).vendas
+			total_de_activo = Balanco.objects.get(ano=self.ano,
+				nome_da_empresa=Company.objects.get(name=self.nome_da_empresa)).total_de_activo()
+
 			return round(vendas / total_de_activo, 2)
 		except Exception as e:
+			# print(e.args)
 			return None
 
 
 class DemonstracaoDeFluxoDeCaixa(models.Model):
 	ano = models.CharField(
 		max_length=50, blank=True,
-		default='2015', unique=True)
+		default='2015')
+	nome_da_empresa = models.ForeignKey(to=Company,
+		on_delete=models.CASCADE, blank=True, null=True)
 	fundos_gerados_das_actividades_operacionais = models.DecimalField(
 		max_digits=20, decimal_places=2, blank=True)
 	fundos_utilizados_em_actividades_de_investimento = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
@@ -590,7 +809,7 @@ class DemonstracaoDeFluxoDeCaixa(models.Model):
 	acrescimo_ou_decrescimo_em_caixa_e_equivalentes_de_caixa = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
 
 	def __str__(self):
-		return f'{self.ano}'
+		return f'{self.nome_da_empresa} - {self.ano}'
 
 	def fluxo_de_caixa(self):
 		return (self.fundos_gerados_das_actividades_operacionais + 
@@ -604,26 +823,39 @@ class DemonstracaoDeFluxoDeCaixa(models.Model):
 
 
 class TableDeDivida(models.Model):
-	balanco = models.OneToOneField(to='Balanco',
-		on_delete=models.CASCADE, unique=True)
+	ano = models.CharField(
+		max_length=50, blank=True,
+		default='2015')
+	# balanco = models.OneToOneField(to='Balanco',
+	# 	on_delete=models.CASCADE, blank=True, null=True)
+	nome_da_empresa = models.ForeignKey(
+		to=Company, on_delete=models.CASCADE,
+		blank=True, null=True)
 	divida_bruta = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
 
 	def __str__(self):
-		return 'Table de Divida'
+		return f'{self.ano} - {self.nome_da_empresa}'
 
 	class Meta:
 		verbose_name = 'Table De Divida'
 		verbose_name_plural = 'Table De Divida'
 
 	def divida_liquida(self):
-		return self.divida_bruta - self.balanco.caixa
+		balanco = Balanco.objects.get(
+			ano=self.ano,
+			nome_da_empresa=self.nome_da_empresa)
+		return self.divida_bruta - balanco.caixa
 
 class DemonstracaoDeResultados(models.Model):
 	ano = models.CharField(
 		max_length=50, blank=True,
-		default='2015', unique=True)
-	vendas = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
-	lucros_bruto = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
+		default='2015')
+	nome_da_empresa = models.ForeignKey(to=Company,
+		on_delete=models.CASCADE, blank=True, null=True)
+	vendas = models.DecimalField(max_digits=20, decimal_places=2, blank=True,
+		default=0.0)
+	lucros_bruto = models.DecimalField(max_digits=20, decimal_places=2, blank=True,
+		default=0.0)
 	EBITIDA = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
 	EBIT = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
 	lucro_antes_de_imposto = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
@@ -634,11 +866,24 @@ class DemonstracaoDeResultados(models.Model):
 	def __str__(self):
 		return f'{self.ano} - {self.vendas}'
 
+	def dividendo_por_acao(self):
+		try:
+			# year = self.date.strftime('%Y')
+			# value = DemonstracaoDeResultados.objects.filter(
+			# 	ano=int(year),
+			# 	nome_da_empresa=self.nome_da_empresa)
+
+			value = self.dividendo_declarados_e_pagos / self.numero_medio_ponderado_de_acoes
+			return round(value, 2)
+		except Exception as e:
+			# print(e.args)
+			return None
+
 	def impostos(self):
 		return self.lucro_antes_de_imposto - self.lucro_liquido_depois_de_imposto
 
 	def lucro_por_acao(self):
-		return round(self.lucro_liquido_depois_de_imposto / self.numero_medio_ponderado_de_acoes, 2)
+		return round(self.lucro_liquido_depois_de_imposto / self.numero_medio_ponderado_de_acoes, 4)
 
 	def dividendo_por_acao(self):
 		return round(self.dividendo_declarados_e_pagos / self.numero_medio_ponderado_de_acoes, 2)
@@ -651,7 +896,9 @@ class DemonstracaoDeResultados(models.Model):
 class Balanco(models.Model):
 	ano = models.CharField(
 		max_length=50, blank=True,
-		default='2015', unique=True)
+		default='2015')
+	nome_da_empresa = models.ForeignKey(to=Company,
+		on_delete=models.CASCADE, blank=True, null=True)
 	activo_corrente = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
 	caixa = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
 	inventarios = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
@@ -659,9 +906,17 @@ class Balanco(models.Model):
 	passivo_corrente = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
 	passivo_nao_corrente = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
 	capital_social = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
-	premio_de_emissao = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
+	premio_de_emissao = models.DecimalField(max_digits=20, decimal_places=2, blank=True,
+		)
 	reservas_nao_distribuidas = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
 	lucros_acumulados = models.DecimalField(max_digits=20, decimal_places=2, blank=True)
+	disconto_de_premio_das_acoes_proprias = models.DecimalField(
+		max_digits=20, decimal_places=2, default=-1.0)
+	resultados_transitado = models.DecimalField(
+		max_digits=20, decimal_places=2, default=-1.0)
+	resultados_de_exercicio = models.DecimalField(
+		max_digits=20, decimal_places=2, default=-1.0)
+
 
 	def __str__(self):
 		return self.ano
@@ -670,6 +925,23 @@ class Balanco(models.Model):
 		verbose_name = 'Balanco'
 		verbose_name_plural = 'Balancos'
 
+	def disconto_e_premio_das_acoes_proprias_(self):
+		if (self.nome_da_empresa.name == 'CDM' or 
+			self.nome_da_empresa.name == 'Arco Investimentos'):
+			return self.premio_de_emissao
+		else:
+			return self.disconto_de_premio_das_acoes_proprias
+
+	def lucros_acumulados_geral(self):
+		if (self.nome_da_empresa.name == 'Hidroelectrica de Cahora Bassa' or
+			self.nome_da_empresa.name == 'Arco Investimentos'):
+			return self.lucros_acumulados_2()
+		else:
+			return self.lucros_acumulados
+
+	def lucros_acumulados_2(self):
+		return self.resultados_de_exercicio + self.resultados_transitado
+
 	def total_de_activo(self):
 		return self.activo_corrente + self.activo_nao_corrente
 
@@ -677,7 +949,7 @@ class Balanco(models.Model):
 		return self.passivo_corrente + self.passivo_nao_corrente
 
 	def total_do_capital_proprio(self):
-		return self.capital_social + self.premio_de_emissao + self.reservas_nao_distribuidas + self.lucros_acumulados
+		return self.capital_social + self.disconto_e_premio_das_acoes_proprias_() + self.reservas_nao_distribuidas + self.lucros_acumulados_geral() 
 
 	def total_do_passvo_e_capital_proprio(self):
 		return self.total_de_passivo() + self.total_do_capital_proprio()

@@ -28,23 +28,35 @@
 			width: 150px;
 			font-weight: bold;
 			height: 100px;
-			border: 1px solid #ccc;
+			/*border: 1px solid #ccc;*/
 		}
 		.right-section-right {
 			margin-top: 10px;
 			margin-left: 5px;
 			padding-bottom: 3px;
+			padding-left: 10px;
+			padding-top: 10px;
 			margin-right: 20px;
-			width: 200px;
-			border-bottom: 4px solid teal;
-			background-color: rgba(0,89,138,.12);
+			width: 230px;
+			border-left: 4px solid teal;
+			/*border-radius: 5px;*/
+			/*border-top-left-radius: 5px;*/
+			/*border-top-right-radius: 5px;*/
+			/*background-color: rgba(0,89,138,.12);*/
+			background: linear-gradient(to right, lightblue, rgba(0,89,138,.12), white, white);
 		}
 		.cotacao {
 
 		}
 		.option {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: center;
 			border-bottom: 1px solid #ccc;
-			font-size: 14px;
+			font-size: 12px;
+
+			padding-right: 10px;
 		}
 		.var-diaria {
 			/*margin-top: 10px;*/
@@ -53,8 +65,17 @@
 			margin-top: 10px;
 			margin-bottom: 10px;
 		}
+		.middle-option-1 {
+			/*margin-top: 10px;*/
+			margin-bottom: 10px;
+		}
 		.option-title {
-			background-color: #E4902D;
+			/*font-size: 14px;*/
+			/*font-weight: bold;*/
+			/*background-color: #E4902D;*/
+		}
+		.option-value {
+			/*color: lightblue;*/
 		}
 		.var-6meses {
 			margin-bottom: 10px !important;
@@ -63,7 +84,7 @@
 			margin-top: 10px !important;
 		}
 		.indicatores-de-valution {
-			
+			padding-bottom: 14px;
 		}
 		.second-row {
 			height: 200px;
@@ -78,6 +99,42 @@
 		.companies {
 			
 		}
+		.left-div > .left {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+		}
+		.left-div > .left span {
+			font-size: 11px;
+			opacity: 0.7;
+		}
+		.first-row-acoes {
+			/*display: flex;
+			justify-content: center;
+			align-items: center;*/
+			border-top: 2px solid #ccc;
+			padding-bottom: 10px;
+		}
+		.span-text {
+			/*font-size: 12px;*/
+		}
+		.bg-red {
+			color: red;
+			font-weight: bold;
+		}
+		.bg-green {
+			font-weight: bold;
+			color: green;
+		}
+		.bg-black {
+			font-weight: bold;
+			color: black;
+		}
+		.indicadores-title {
+			opacity: 0.6;
+			font-size: 14px;
+		}
 	</style>
 {% endblock %}
 
@@ -87,8 +144,14 @@
 			<h3>Analise de Investimentos (Accoes)</h3>
 			<div class="companies">
 				{% for div_ in titles %}
-					<a href="{% url 'client:only_page' div_ %}" class="{{ div_ }} accoes-div">
-						<span class="span-text action-name">{{ div_ }}</span>
+					<a href="{% url 'client:only_page' div_ %}" class="{{ div_|replace_value2 }} accoes-div">
+						<span class="span-text action-name">
+							{% if div_ == "Hidroelectrica de Cahora Bassa" %}
+								HCB
+							{% else %}
+								{{ div_ }}
+							{% endif %}
+						</span>
 						<img class="action-logo" src="{% static "cdm.jpg" %}">
 					</a>
 				{% endfor %}
@@ -97,71 +160,77 @@
 		<div class="right-section">
 			<h3 class="acction-title">Incadores de Performance ({{ page }})</h3>
 			<div class="right-section-options">
-				<div class="left-div cotacao first-row">
-					<div class="left">Cotacao</div>
+				<div class="left-div cotacao first-row first-row-acoes">
+					<div class="left indicadores-title" style="margin-top: 20px;">
+						Cotacao
+						<span>{{ today|date:"M d, Y" }}</span>
+					</div>
 					<div class="right-section-right left-row">
 						<div class="option">
 							<span class="span-text option-title valor-actual">Valor Actual</span>
-							<span class="span-text option-value">MZN {{ cotacao.preco_da_acao }}</span>
+							<span class="span-text option-value valor-actual-value-with-currency"> {{ cotacao.preco_da_acao }}</span>
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">Var. Diaria</span>
-							<span class="span-text option-value">{{ cotacao.Variacao_Diaria }}%</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Diaria }}</span>
 						</div>
-						<div class="option var-diaria">
+						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">Var. Semanal</span>
-							<span class="span-text option-value">{{ cotacao.Variacao_Semanal }}%</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Semanal }}</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Var. Mensal</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Mensal }}</span>
 						</div>
 					</div>
 
 
 					<div class="right-section-right">
-						<div class="option var-diaria">
-							<span class="span-text option-title">Var. Mensal</span>
-							<span class="span-text option-value">{{ cotacao.Variacao_Mensal }}%</span>
-						</div>
-						<div class="option var-diaria middle-option">
+						<div class="option var-diaria middle-option-1">
 							<span class="span-text option-title">Var. 6meses</span>
-							<span class="span-text option-value">{{ cotacao.Variacao_Semestral }}%</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Semestral }}</span>
 						</div>
 						<div class="option var-diaria">
 							<span class="span-text option-title">Var Med. Dia</span>
-							<span class="span-text option-value">{{ serialized.var_media_diaria }}%</span>
+							<span class="span-text option-value {{ serialized.var_media_diaria.color }}">{{ serialized.var_media_diaria.value }}%</span>
+						</div><div class="option var-diaria middle-option">
+							<span class="span-text option-title">Var Med. Semanal</span>
+							<span class="span-text option-value {{ serialized.var_media_semanal.color }}">{{ serialized.var_media_semanal.value }}%</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Var Med. Mensal</span>
+							<span class="span-text option-value {{ serialized.var_media_mensal.color }}">{{ serialized.var_media_mensal.value }}%</span>
 						</div>
 					</div>
 
 
 					<div class="right-section-right">
-						<div class="option var-diaria">
-							<span class="span-text option-title">Var Med. Mensal</span>
-							<span class="span-text option-value">{{ serialized.var_media_mensal }}%</span>
-						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">Min 12 Meses</span>
-							<span class="span-text option-value">MZN {{ serialized.min_value }}</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.min_value.value }}</span>
 						</div>
-						<div class="option var-diaria">
+						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">Max 12 meses</span>
-							<span class="span-text option-value">MZN {{ serialized.max_value }}</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.max_value.value }}</span>
 						</div>
 					</div>
 
 				</div>
 
 				<div class="left-div indicatores-de-valution second-row left-row">
-					<div class="left second-row">Indicadores de Valuation</div>
+					<div class="left second-row indicadores-title">Indicadores de Valuation</div>
 					<div class="right-section-right">
 						<div class="option">
 							<span class="span-text option-title valor-actual">Div/Ac.</span>
-							<span class="span-text option-value">MZN 0.00</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.dividendo_por_acao_ultimo_valor.value }}</span>
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">P/L</span>
-							<span class="span-text option-value">6.38</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.P_L.value }}</span>
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">LPA</span>
-							<span class="span-text option-value">MZN 9.41</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.LPA.value }}</span>
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">P/EBITIDA</span>
@@ -169,27 +238,27 @@
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">Div. Yield</span>
-							<span class="span-text option-value">0.0%</span>
+							<span class="span-text option-value {{ serialized.Dividend_Yield.color }}">{{ serialized.Dividend_Yield.value }}%</span>
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">P/EBIT</span>
-							<span class="span-text option-value">2.8</span>
+							<span class="span-text option-value {{ serialized.P_EBIT.color }}">{{ serialized.P_EBIT.value }} anos</span>
 						</div>
 					</div>
 
 
 					<div class="right-section-right">
 						<div class="option">
-							<span class="span-text option-title valor-actual">VAP</span>
-							<span class="span-text option-value">MZN 108.10</span>
+							<span class="span-text option-title valor-actual">VPA</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.VPL_Nas_Acoes.value }}</span>
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">P/Activos</span>
-							<span class="span-text option-value">MZN 0.34</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.P_ACTIVO.value }}</span>
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">P/SR</span>
-							<span class="span-text option-value">MZN 0.46</span>
+							<span class="span-text option-value {{ serialized.PSR.color }}">{{ serialized.PSR.value }} anos</span>
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">EV/EBITDA</span>
@@ -197,19 +266,149 @@
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">P/Cap. Giro</span>
-							<span class="span-text option-value">-MZN 1.89</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.P_Capital_De_Giro.value }}</span>
 						</div>
 						<div class="option var-diaria middle-option">
 							<span class="span-text option-title">P/C.Circ.LiQ</span>
-							<span class="span-text option-value">-MZN 1.79</span>
+							<span class="span-text option-value valor-actual-value-with-currency">
+								{{ serialized.P_Capital_De_Giro_Liquido.value }}
+							</span>
+						</div>
+					</div>
+
+					<div class="right-section-right">
+						<div class="option">
+							<span class="span-text option-title valor-actual">EV/EBIT</span>
+							<span class="span-text option-value {{ serialized.EV_EBIT.color }}">{{ serialized.EV_EBIT.value }} anos</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">EBIT/Activos</span>
+							<span class="span-text option-value {{ serialized.EBIT_ACTOVOS.color }}">{{ serialized.EBIT_ACTOVOS.value }}%</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">P/VPA</span>
+							<span class="span-text option-value {{ serialized.VPL.color }}">
+								MZN {{ serialized.VPL.value }}
+							</span>
+						</div>
+					</div>
+
+
+				</div>
+				<div class="left-div">
+					<div class="left indicadores-title">Indicadores de Rentabilidade</div>
+					<div class="right-section-right left-row">
+						<div class="option">
+							<span class="span-text option-title valor-actual">ROE</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ serialized.ROE.value }}</span>
+						</div>
+						<div class="option">
+							<span class="span-text option-title valor-actual">ROIC</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ serialized.Roic.value }}</span>
+						</div>
+					</div>
+					<div class="right-section-right left-row">
+						<div class="option">
+							<span class="span-text option-title valor-actual">ROI</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ serialized.ROA.value }}</span>
+						</div>
+						<div class="option">
+							<span class="span-text option-title valor-actual">Giro dos Activos</span>
+							<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.Giro_dos_Activos.value }}</span>
 						</div>
 					</div>
 				</div>
 				<div class="left-div">
-					<div class="left">Indicadores de Rentabilidade</div>
+					<div class="left indicadores-title">Indicadores de Eficiencia e Crescimento</div>
+					<div class="right-section-right left-row">
+						<div class="option">
+							<span class="span-text option-title valor-actual">M. Bruto</span>
+							<span class="span-text option-value valor-actual-value-with-currency"> {{ cotacao.preco_da_acao }}</span>
+						</div>
+						<div class="option">
+							<span class="span-text option-title valor-actual">M. EBIT</span>
+							<span class="span-text option-value valor-actual-value-with-currency"> {{ cotacao.preco_da_acao }}</span>
+						</div>
+					</div>
+					<div class="right-section-right left-row">
+						<div class="option">
+							<span class="span-text option-title valor-actual">M. EBITIDA</span>
+							<span class="span-text option-value valor-actual-value-with-currency"> {{ cotacao.preco_da_acao }}</span>
+						</div>
+						<div class="option">
+							<span class="span-text option-title valor-actual">M. Líquida</span>
+							<span class="span-text option-value valor-actual-value-with-currency"> {{ cotacao.preco_da_acao }}</span>
+						</div>
+					</div>
+					<div class="right-section-right left-row">
+						<div class="option">
+							<span class="span-text option-title valor-actual">CAGR Lucro 5-anos</span>
+							<span class="span-text option-value valor-actual-value-with-currency"> {{ cotacao.preco_da_acao }}</span>
+						</div>
+						<div class="option">
+							<span class="span-text option-title valor-actual">CAGR Receita 5-anos</span>
+							<span class="span-text option-value valor-actual-value-with-currency"> {{ cotacao.preco_da_acao }}</span>
+						</div>
+					</div>
 				</div>
-				<div class="left-div">
-					<div class="left">Indicadores de Endividamento</div>
+				<div class="left-div cotacao first-row first-row-acoes">
+					<div class="left indicadores-title" style="margin-top: 20px;">
+						Indicadores de Endividamento
+					</div>
+					<div class="right-section-right left-row">
+						<div class="option">
+							<span class="span-text option-title valor-actual">Div. Liq/PL</span>
+							<span class="span-text option-value valor-actual-value-with-currency"> {{ cotacao.preco_da_acao }}</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Liq. Seca</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Diaria }}</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Li. Corrente</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Semanal }}</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Liq. Geral</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Mensal }}</span>
+						</div>
+					</div>
+
+
+					<div class="right-section-right">
+						<div class="option var-diaria middle-option-1">
+							<span class="span-text option-title">Div. Liq./Activos</span>
+							<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Semestral }}</span>
+						</div>
+						<div class="option var-diaria">
+							<span class="span-text option-title">Div. Liq./EBIT</span>
+							<span class="span-text option-value {{ serialized.var_media_diaria.color }}">{{ serialized.var_media_diaria.value }}%</span>
+						</div><div class="option var-diaria middle-option">
+							<span class="span-text option-title">Div. Liq./EBITIDA</span>
+							<span class="span-text option-value {{ serialized.var_media_semanal.color }}">{{ serialized.var_media_semanal.value }}%</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Div. Liq./L.L</span>
+							<span class="span-text option-value {{ serialized.var_media_mensal.color }}">{{ serialized.var_media_mensal.value }}%</span>
+						</div>
+					</div>
+
+
+					<div class="right-section-right">
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Passivo/Activo</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.min_value.value }}</span>
+						</div>
+						<div class="option var-diaria middle-option">
+							<span class="span-text option-title">Div. Bruta/L.L</span>
+							<span class="span-text option-value valor-actual-value-with-currency">{{ serialized.max_value.value }}</span>
+						</div>
+					</div>
+				</div>
+				<div class="left-div cotacao first-row first-row-acoes">
+					<div class="left indicadores-title" style="margin-top: 20px;">
+						Indicadores de Governança
+					</div>
 				</div>
 			</div>
 		</div>
@@ -218,6 +417,58 @@
 
 {% block javascript %}
 	<script>
-		
+		let valor_actual_value = document.querySelectorAll('.valor-actual-value-with-currency');
+		for (let tag of valor_actual_value) {
+			setColorForTag2(tag);
+		}
+
+		loadCompanyClasses();
+		function loadCompanyClasses() {
+			fetch('/get_compay_names_and_ids/')
+				.then(res => res.json())
+				.then(data => {
+					let companies = data.companies;
+					for (let company of companies) {
+						let tag = document.querySelector(`.${company}`);
+						if (tag.href === window.location.href) {
+							tag.classList.remove('add-gradient-to-accoes-div');
+							tag.classList.add('highlighted-accoes-div');
+						} else {
+							tag.classList.add('add-gradient-to-accoes-div');
+							tag.classList.remove('highlighted-accoes-div');
+						}
+					}
+				})
+				.catch(err => console.error(err));
+		}
+
+		function setColorForTag2(tag) {
+			let value = parseFloat(tag.textContent);
+			if (value == 0) {
+				tag.classList.add('bg-black');
+			} else if (value > 0) {
+				tag.classList.add('bg-green');
+			} else {
+				tag.classList.add('bg-red');
+			}
+			tag.innerHTML = 'MZN ' + tag.innerHTML;
+		}
+
+		function setColorForTag(tag) {
+			let value = parseFloat(tag.textContent);
+			if (value == 0) {
+				tag.classList.add('bg-black');
+			} else if (value > 0) {
+				tag.classList.add('bg-green');
+			} else {
+				tag.classList.add('bg-red');
+			}
+			tag.innerHTML += '%';
+		}
+
+		let format_cotacao_values = document.querySelectorAll('.format-cotacao-value-with-percent');
+		for (let tag of format_cotacao_values) {
+			setColorForTag(tag);
+		}
 	</script>
 {% endblock %}

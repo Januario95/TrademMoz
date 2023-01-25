@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils import timezone
 from django.utils.safestring import mark_safe
 
 from .models import (
@@ -12,6 +13,9 @@ from .models import (
 	MetricasPorAccao,
 	CotacoesDasAcoes,
 	Company,
+)
+from .forms import (
+	CotacoesDasAcoesForm,
 )
 
 
@@ -36,10 +40,12 @@ class CompanyAdmin(admin.ModelAdmin):
 
 @admin.register(CotacoesDasAcoes)
 class CotacoesDasAcoesdmin(admin.ModelAdmin):
+	form = CotacoesDasAcoesForm
 	list_display = ['id', 'date', 'nome_da_empresa',
 					'preco_da_acao', 'Valor_Do_Mercado_',
 					'EV_', 'Variacao_Diaria_', 'Variacao_Semanal_',
-					'Variacao_Mensal_', 'Variacao_Semestral_']
+					'Variacao_Mensal_', 'Variacao_Semestral_',
+					'P_L']
 
 	list_per_page = 1000
 	list_filter = ['nome_da_empresa',]
@@ -102,9 +108,9 @@ class MetricasPorAccaoAdmin(admin.ModelAdmin):
 					'P_L_', 'P_VPA_', 'P_EBITDA_',
 					'P_ACTIVO_', 'EBIT_ACTIVOS_',
 					'Dividend_Yield_', 'PSR_',
-					'EV_EBIT_', 'EV_EBITDA_',
 					'P_Capital_De_Giro_',
 					'P_Capital_De_Giro_Liquido_']
+	list_filter = ['nome_da_empresa']
 
 	def P_Capital_De_Giro_Liquido_(self, obj):
 		if obj.P_Capital_De_Giro_Liquido() is None:
@@ -124,44 +130,29 @@ class MetricasPorAccaoAdmin(admin.ModelAdmin):
 		return mark_safe(f'MZN {obj.P_Capital_De_Giro()}')
 	P_Capital_De_Giro_.short_description = 'P Capital De Giro'
 
-	def EV_EBITDA_(self, obj):
-		if obj.EV_EBITDA() is None:
-			return 'Sem registo'
-		if obj.EV_EBITDA() == 0:
-			return 'Sem registo'
-		return mark_safe(f'MZN {obj.EV_EBITDA()}')
-	EV_EBITDA_.short_description = 'EV EBITDA'	
-
-	def EV_EBIT_(self, obj):
-		if obj.EV_EBIT() is None:
-			return 'Sem registo'
-		if obj.EV_EBIT() == 0:
-			return 'Sem registo'
-		return mark_safe(f'MZN {obj.EV_EBIT()}')
-	EV_EBIT_.short_description = 'EV EBIT'	
-
 	def PSR_(self, obj):
 		if obj.PSR() is None:
-			return 'Sem registo'
+			return 'Impossivel de calcular'
 		if obj.PSR() == 0:
-			return 'Sem registo'
+			return 0.0
 		return mark_safe(f'MZN {obj.PSR()}')
-	PSR_.short_description = 'Dividend Yield'
+	PSR_.short_description = 'PSR'
 
 	def Dividend_Yield_(self, obj):
 		if obj.Dividend_Yield() is None:
 			return 'Sem registo'
 		if obj.Dividend_Yield() == 0:
-			return 'Sem registo'
+			return 0.0
 		return mark_safe(f'{obj.Dividend_Yield()}%')
 	Dividend_Yield_.short_description = 'Dividend Yield'
 
 	def EBIT_ACTIVOS_(self, obj):
-		if obj.EBIT_ACTOVOS() is None:
+		print(f'EBIT_ACTIVOS_ = {obj.EBIT_ACTIVOS}')
+		if obj.EBIT_ACTIVOS() is None:
 			return 'Sem registo'
-		if obj.EBIT_ACTOVOS() == 0:
+		if obj.EBIT_ACTIVOS() == 0:
 			return 'Impossivel de calcular'
-		return mark_safe(f'{obj.EBIT_ACTOVOS()}%')
+		return mark_safe(f'{obj.EBIT_ACTIVOS()}%')
 	EBIT_ACTIVOS_.short_description = 'EBIT ACTIVOS'
 
 	def P_ACTIVO_(self, obj):
@@ -266,7 +257,7 @@ class MetricasPorAccaoAdmin(admin.ModelAdmin):
 
 @admin.register(IndicadoresDeEndividamento)
 class IndicadoresDeEndividamentoAdmin(admin.ModelAdmin):
-	list_display = ['id', 'ano', 'Liquidez_Corrente_',
+	list_display = ['id', 'ano', 'nome_da_empresa', 'Liquidez_Corrente_',
 					'Liquidez_Seca_', 'Liquidez_Geral_',
 					'Divida_or_Activo_Total_',
 					'Divida_Patrimonio_Liquido_',
@@ -336,7 +327,7 @@ class IndicadoresDeEndividamentoAdmin(admin.ModelAdmin):
 
 @admin.register(IndicadoresDeCrescimento)
 class IndicadoresDeCrescimentoAdmin(admin.ModelAdmin):
-	list_display = ['id', 'ano', 'CAGR_Receita_5A_',
+	list_display = ['id', 'ano', 'nome_da_empresa', 'CAGR_Receita_5A_',
 					'CAGR_Lucro_5A_']
 
 	def CAGR_Receita_5A_(self, obj):
@@ -354,7 +345,7 @@ class IndicadoresDeCrescimentoAdmin(admin.ModelAdmin):
 
 @admin.register(IndicadoresDeEficiencia)
 class IndicadoresDeEficienciaAdmin(admin.ModelAdmin):
-	list_display = ['id', 'ano', 'margem_bruta_',
+	list_display = ['id', 'ano', 'nome_da_empresa', 'margem_bruta_',
 					'margin_EBITIDA_', 'margin_EBIT_',
 					'margin_Liquida_']
 
@@ -382,8 +373,11 @@ class IndicadoresDeEficienciaAdmin(admin.ModelAdmin):
 
 @admin.register(IndicadoresDeRentabilidade)
 class IndicadoresDeRentabilidadeAdmin(admin.ModelAdmin):
-	list_display = ['id', 'ano', 'ROA_', 
-					'ROE_', 'Roic_', 'Giro_dos_Activos']
+	list_display = ['id', 'ano', 'nome_da_empresa', 'ROA_', 
+					'ROE_', 
+					'Roic_', 
+					'Giro_dos_Activos']
+	list_filter = ['nome_da_empresa']
 
 	def ROA_(self, obj):
 		if obj.ROA() is None:
@@ -412,7 +406,8 @@ class IndicadoresDeRentabilidadeAdmin(admin.ModelAdmin):
 
 @admin.register(DemonstracaoDeFluxoDeCaixa)
 class DemonstracaoDeFluxoDeCaixaAdmin(admin.ModelAdmin):
-	list_display = ['id', 'ano', 'fundos_gerados_das_actividades_operacionais', 
+	list_display = ['id', 'ano', 'nome_da_empresa', 
+					'fundos_gerados_das_actividades_operacionais', 
 					'fundos_utilizados_em_actividades_de_investimento', 
 					'fundos_introduzidos_atraves_de_actividades_de_financiamento', 
 					'acrescimo_ou_decrescimo_em_caixa_e_equivalentes_de_caixa',
@@ -424,10 +419,12 @@ class DemonstracaoDeFluxoDeCaixaAdmin(admin.ModelAdmin):
 
 @admin.register(DemonstracaoDeResultados)
 class DemonstracaoDeResultadosAdmin(admin.ModelAdmin):
-	list_display = ['id', 'ano', 'vendas', 'lucros_bruto', 'EBITIDA', 'EBIT',
+	list_display = ['id', 'ano', 'nome_da_empresa', 'vendas', 'lucros_bruto', 
+					'EBITIDA', 'EBIT',
 					'lucro_antes_de_imposto', 'impostos', 'lucro_liquido_depois_de_imposto', 
 					'dividendo_declarados_e_pagos', 'numero_medio_ponderado_de_acoes',
 					'lucro_por_acao', 'dividendo_por_acao']
+	list_filter = ['nome_da_empresa']
 
 	def impostos(self, obj):
 		return obj.impostos()
@@ -443,10 +440,14 @@ class DemonstracaoDeResultadosAdmin(admin.ModelAdmin):
 
 @admin.register(TableDeDivida)
 class TableDeDividaAdmin(admin.ModelAdmin):
-	list_display = ['id', 'ano', 'divida_bruta', 'divida_liquida']
+	list_display = ['id', 'ano_', 'nome_da_empresa', 
+					'divida_bruta', 'divida_liquida']
+	# list_editable = ['nome_da_empresa']
+	list_filter = ['nome_da_empresa']
 
-	def ano(self, obj):
-		return obj.balanco.ano
+	def ano_(self, obj):
+		return obj.ano
+	ano_.short_description = 'Ano'
 
 	def divida_liquida(self, obj):
 		return obj.divida_liquida()
@@ -459,12 +460,26 @@ class TableDeDividaAdmin(admin.ModelAdmin):
 
 @admin.register(Balanco)
 class BalancoAdmin(admin.ModelAdmin):
-	list_display = ['id', 'ano', 'activo_corrente', 'caixa', 'inventarios',
+	list_display = ['id', 'ano', 'nome_da_empresa', 
+					'activo_corrente', 'caixa', 'inventarios',
 					'activo_nao_corrente', 'total_de_activo', 'passivo_corrente',
 					'passivo_nao_corrente', 'total_de_passivo', 'capital_social',
-					'premio_de_emissao', 'reservas_nao_distribuidas',
-					'lucros_acumulados', 'total_do_capital_proprio',
-					'total_do_passvo_e_capital_proprio']
+					'reservas_nao_distribuidas',
+					# 'premio_de_emissao',
+					# 'lucros_acumulados', 
+					# 'lucros_acumulados_2', 
+					# 'disconto_de_premio_das_acoes_proprias',
+					'disconto_e_premio_das_acoes_proprias_',
+					'resultados_transitado', 'resultados_de_exercicio',
+					'lucros_acumulados_geral',
+					'total_do_capital_proprio',
+					'total_do_passvo_e_capital_proprio',]
+	# list_editable = ['nome_da_empresa']
+	list_filter = ['nome_da_empresa']
+
+	def lucros_acumulados_geral(self, obj):
+		return obj.lucros_acumulados_geral()
+	lucros_acumulados_geral.short_description = 'Lucros Acumulados'
 
 	def total_do_passvo_e_capital_proprio(self, obj):
 		return obj.total_do_passvo_e_capital_proprio()

@@ -3,26 +3,29 @@ from django.contrib.auth.models import User
 from django.contrib.auth import (
 	authenticate, login as auth_login, logout
 )
-from rest_framework.decorators import api_view
-from rest_framework.viewsets import ModelViewSet
 from django.contrib.auth.decorators import (
 	login_required
 )
+from rest_framework.decorators import api_view
+from rest_framework.viewsets import ModelViewSet
 from django.http import HttpResponse, JsonResponse
 
 from .models import (
 	Client, 
 	CotacoesDasAcoes,
 	Company, MetricasPorAccao,
+	DemonstracaoDeResultados,
+	IndicadoresDeRentabilidade,
 )
 
 from .forms import (
 	ClientForm,
 	LoginForm,
+	CotacoesDasAcoesForm,
 )
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 # from .serializers import (
@@ -30,9 +33,16 @@ from datetime import datetime
 # )
 
 
-# class CotacoesDasAcoesModelViewSet(ModelViewSet):
-# 	queryset = CotacoesDasAcoes.objects.all()
-# 	serializer_class = CotacoesDasAcoesSerializer
+def get_compay_names_and_ids(request):
+	companies = Company.objects.all()
+	companies_ = []
+	for company in companies:
+		company = company.name.replace(' ', '-').replace('_', '-').lower()[::-1]
+		companies_.append(company)
+
+	return JsonResponse({
+		'companies': companies_
+	})
 
 
 @login_required
@@ -61,39 +71,117 @@ def investiments_analysis(request, page='CDM'):
 	titles = ['CDM', 'CMH', 'Arko Seguros', 'Zero Investimentos', '2Business',
 	          'Tropigalia', 'HCB', 'Emose', 'Arko Investimentos', 'Revimo',
 	          'PayTach']
- #    titles = [
-	# 	{'name': 'CDM', 'img': 'cdm.jpg'}, 
-	# 	{'name': 'CMH', 'img': 'cdm.jpg'}, {'name': 'Arko Seguros', 'img': 'cdm.jpg'}, 
-	# 	{'name': 'Zero Investimentos', 'img': 'cdm.jpg'}, 
-	# 	{'name': '2Business', 'img': 'cdm.jpg'},
-	#     {'name': 'Tropigalia', 'img': 'cdm.jpg'}, 
-	#     {'name': 'HCB', 'img': 'cdm.jpg'}, {'name': 'Emose', 'img': 'cdm.jpg'},
-	#     {'Arko Investimentos', 'cdm.jpg'}, {'Revimo', 'cdm.jpg'},
-	#     {'name': 'PayTach', 'img': 'cdm.jpg'}
-	# ]
 
-	# if page == 'index':
-	# 	page = page.replace(" ", "_")
-	# 	return render(request,
-	# 				'pages/investiments_analysis.html',
-	# 				{'titles': titles,
-	# 				'data': data, 'page': page})
-	# else:
 	page = page.replace(" ", "_")
-	# if page == 'index':
-	# 	page = 'CDM'
 	return render(request,
 				f'pages/{page}.html',
 				{'titles': titles, 'index': page, 'page': page.replace('_', ' ')})
 
 
+def get_cotacao(request, pk):
+	cotacao = CotacoesDasAcoes.objects.filter(pk=pk)
+	if cotacao.exists():
+		cotacao = cotacao.first().serialize()
+	else:
+		cotacao = {}
+
+	return JsonResponse({
+		'cotacao': cotacao
+	})
+
+def delete_cotacao(request, pk):
+	cotacao = CotacoesDasAcoes.objects.filter(pk=pk)
+	deleted = False
+	if cotacao.exists():
+		cotacao = cotacao.first()
+		cotacao.delete()
+		deleted = True
+
+	return JsonResponse({
+		'deleted': deleted
+	})
+
+def get_cotacoes(company_name):
+	company = Company.objects.filter(name=company_name)
+	if company.exists():
+		company = company.first()
+		cotacoes = CotacoesDasAcoes.objects.filter(
+			nome_da_empresa=company)
+	else:
+		cotacoes = {}
+	return cotacoes
+
+def update_company(request, company_name):
+	# company = Company.objects.filter(name=company_name)
+	# if company.exists():
+	# 	company = company.first()
+	# 	cotacoes = CotacoesDasAcoes.objects.filter(
+	# 		nome_da_empresa=company)
+	# else:
+	# 	cotacoes = {}
+	cotacoes = get_cotacoes(company_name)
+	titles_ = Company.objects.all()
+	titles = []
+	for title in titles_:
+		titles.append(title.name)
+
+	# titles = sorted(['CDM', 'CMH', 'Arko Seguros', 'Zero Investimentos', '2Business',
+	#           'HCB', 'Emose', 'Arco Investimentos', 'Revimo',
+	#           'Paytech', 'Touch Publicidade'])
+
+	if cotacoes:
+		ultima_cotacao = cotacoes.last()
+		data_da_ultima_cotacao = ultima_cotacao.date + timedelta(days=1)
+		cotacoes = cotacoes.order_by('-date')
+	else:
+		data_da_ultima_cotacao = ''
+
+	if request.method == 'POST':
+		form = CotacoesDasAcoesForm(request.POST)
+		if form.is_valid():
+			# form.save()
+			data = form.cleaned_data
+			print(data)
+			# date = data['date']
+			# nome_da_empresa = data['nome_da_empresa']
+			# preco_da_acao = data['preco_da_acao']
+			# cotacoes = get_cotacoes(company_name)
+		else:
+			print(form.errors)
+	else:
+		form = CotacoesDasAcoesForm(initial={
+			'date': data_da_ultima_cotacao,
+			'nome_da_empresa': Company.objects.get(name='CDM'),
+			'preco_da_acao': 70
+		})
+
+	return render(request,
+				'pages/update_company.html',
+				{'user': request.user, 'titles': titles,
+				 'cotacoes': cotacoes, 'form': form})
+
+def get_color_by_value(value):
+	if value < 0:
+		color = 'bg-red'
+	else:
+		color = 'bg-green'
+	return color
+
+def get_value_and_color(variable):
+	row = {}
+	row['value'] = variable
+	row['color'] = get_color_by_value(variable)
+	return row
+
 def only_page(request, page):
 	data = {
 		'name': request.user.first_name + ' ' + request.user.last_name
 	}
-	titles = sorted(['CDM', 'CHM', 'Arko Seguros', 'Zero Investimentos', '2Business',
-	          'HCB', 'Emose', 'Arco Investimentos', 'Revimo',
-	          'Paytech', 'Touch Publicidade'])
+	titles_ = Company.objects.all()
+	titles = []
+	for title in titles_:
+		titles.append(title.name)
+
 	company_name = page
 	if company_name == 'HCB':
 		company_name = 'Hidroelectrica de Cahora Bassa'
@@ -104,17 +192,148 @@ def only_page(request, page):
 	)
 	first_obj = objs.first()
 	obj = objs.last()
-	# print(f'date = {objs[objs.count()-1]}')
-	# metricas = MetricasPorAccao.objects.filter(
-	# 	ano=obj.date.year,
-	# 	nome_da_empresa=company_name)
-	# print(f'metricas = {metricas}')
-	var_media_diaria = 0
-	var_media_mensal = 0
+	serialized = obj.serialize()
+
 	min_value = first_obj.preco_da_acao
 	max_value = 0
+
+	dividendo_por_acao_ultimo_valor = None
+	P_L = None
+	
+	try:
+		LPA = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		LPA = LPA.LPA()
+		serialized['LPA'] = get_value_and_color(LPA)
+	except Exception as e:
+		pass
+
+	try:
+		Dividend_Yield = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		Dividend_Yield = Dividend_Yield.Dividend_Yield()
+		# serialized['Dividend_Yield'] = Dividend_Yield
+		serialized['Dividend_Yield'] = get_value_and_color(Dividend_Yield)
+	except Exception as e:
+		pass
+
+	
+	try:
+		P_EBIT = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		P_EBIT = P_EBIT.P_EBIT()
+		# serialized['P_EBIT'] = P_EBIT
+		serialized['P_EBIT'] = get_value_and_color(P_EBIT)
+	except Exception as e:
+		pass
+
+	try:
+		P_VPA = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		P_VPA = P_VPA.P_VPA()
+		serialized['VPL'] = get_value_and_color(P_VPA)
+	except Exception as e:
+		pass
+
+	try:
+		VPL_ = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		VPL = VPL_.VPL()
+	except Exception as e:
+		pass
+
+
+	try:
+		Valor_Do_Mercado = obj.Valor_Do_Mercado()
+		serialized['Valor_Do_Mercado'] = get_value_and_color(Valor_Do_Mercado)
+	except Exception as e:
+		pass
+
+	try:
+		EV_EBIT = obj.EV_EBIT()
+		serialized['EV_EBIT'] = get_value_and_color(EV_EBIT)
+	except Exception as e:
+		pass
+
+	try:
+		ebit = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		EBIT_ACTOVOS = ebit.EBIT_ACTOVOS()
+		serialized['EBIT_ACTOVOS'] = get_value_and_color(EBIT_ACTOVOS)
+	except Exception as e:
+		pass
+
+
+	try:
+		VPL_Nas_Acoes = VPL_.VPL_Nas_Acoes(page.replace('_', ' '))
+		serialized['VPL_Nas_Acoes'] = get_value_and_color(VPL_Nas_Acoes)
+	except Exception as e:
+		pass
+
+	try:
+		P_ACTIVO = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		P_ACTIVO = P_ACTIVO.P_ACTIVO()
+		serialized['P_ACTIVO'] = get_value_and_color(P_ACTIVO)
+	except Exception as e:
+		pass
+
+	try:
+		PSR = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		PSR = PSR.PSR()
+		serialized['PSR'] = get_value_and_color(PSR)
+	except Exception as e:
+		pass
+
+	try:
+		P_Capital_De_Giro = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		P_Capital_De_Giro = P_Capital_De_Giro.P_Capital_De_Giro()
+		serialized['P_Capital_De_Giro'] = get_value_and_color(P_Capital_De_Giro)
+	except Exception as e:
+		pass
+
+	try:
+		P_Capital_De_Giro_Liquido = MetricasPorAccao.objects.filter(
+			nome_da_empresa=company).first()
+		P_Capital_De_Giro_Liquido = P_Capital_De_Giro_Liquido.P_Capital_De_Giro_Liquido()
+		serialized['P_Capital_De_Giro_Liquido'] = get_value_and_color(P_Capital_De_Giro_Liquido)
+	except Exception as e:
+		pass
+	
+	Indicadores = IndicadoresDeRentabilidade.objects.filter(
+		nome_da_empresa=company
+	)
+	ROE = 0.0
+	if Indicadores.exists():
+		Indicadores = Indicadores.last()
+		print(f'LAST YEAR = {Indicadores.ano}')
+		ROE = Indicadores.ROE()
+		print(f'ROE = {ROE}')
+		serialized['ROE'] = get_value_and_color(ROE)
+
+		Roic = Indicadores.Roic()
+		print(f'Roic = {Roic}')
+		serialized['Roic'] = get_value_and_color(Roic)
+
+		ROA = Indicadores.ROA()
+		print(f'ROA = {ROA}')
+		serialized['ROA'] = get_value_and_color(ROA)
+
+		Giro_dos_Activos = Indicadores.Giro_dos_Activos()
+		print(f'Giro_dos_Activos = {Giro_dos_Activos}')
+		serialized['Giro_dos_Activos'] = get_value_and_color(Giro_dos_Activos)
+
+	index_counter_for_semanal = 0
+	index_counter_for_mensal = 0
+	var_media_diaria = 0
+	var_media_semanal = 0
+	var_media_mensal = 0
 	for val in objs:
-		# print(f'date = {val.date}.\tvar_media_diaria = {val.Variacao_Mensal()}')
+		P_L = val.P_L()
+		dividendo_por_acao_ultimo_valor = val.dividendo_por_acao_ultimo_valor(company)
+
 		if val.preco_da_acao > max_value:
 			max_value = val.preco_da_acao
 
@@ -127,21 +346,42 @@ def only_page(request, page):
 			pass
 
 		try:
-			var_media_mensal += val.Variacao_Mensal()
+			var_media_semanal += val.Variacao_Semanal()
+			index_counter_for_semanal += 1
 		except Exception as e:
 			pass
 
-	var_media_diaria = round(var_media_diaria / objs.count(), 2) * 100
-	var_media_mensal = round(var_media_mensal / objs.count(), 2) * 100
-	serialized = obj.serialize()
-	serialized['var_media_diaria'] = var_media_diaria
-	serialized['var_media_mensal'] = var_media_mensal
-	serialized['min_value'] = min_value
-	serialized['max_value'] = max_value
+		try:
+			var_media_mensal += val.Variacao_Mensal()
+			index_counter_for_mensal += 1
+		except Exception as e:
+			pass
+
+	var_media_diaria = round(var_media_diaria / objs.count(), 2)
+	var_media_mensal = round(var_media_mensal / index_counter_for_mensal, 2)
+	var_media_semanal = round(var_media_semanal / index_counter_for_semanal, 2)
+	
+	serialized['var_media_diaria'] = get_value_and_color(var_media_diaria)
+	serialized['var_media_semanal'] = get_value_and_color(var_media_semanal)
+	serialized['var_media_mensal'] = get_value_and_color(var_media_mensal)
+	serialized['min_value'] = get_value_and_color(min_value)
+	serialized['max_value'] = get_value_and_color(max_value)
+	try:
+		serialized['dividendo_por_acao_ultimo_valor'] = get_value_and_color(dividendo_por_acao_ultimo_valor)
+	except Exception as e:
+		pass
+
+	try:
+		serialized['P_L'] = get_value_and_color(P_L)
+	except Exception as e:
+		pass
+
+	last_date = CotacoesDasAcoes.objects.last()
+	today = last_date.date
 	return render(request,
 				'pages/only_page.html',
 				{'titles': titles, 'index': page, 'page': page.replace('_', ' '),
-				 'cotacao': obj, 'serialized': serialized})
+				 'cotacao': obj, 'serialized': serialized, 'today': today})
 
 
 @login_required
@@ -168,7 +408,6 @@ def login_page(request):
 			form = LoginForm(request.POST)
 			if form.is_valid():
 				data = form.cleaned_data
-				print(data)
 				username = data['username']
 				password = data['password']
 				user = authenticate(
@@ -179,7 +418,7 @@ def login_page(request):
 				print(user)
 				if user is not None:
 					auth_login(request, user)
-					return redirect('/')
+					return redirect('/only_page/CDM/')
 				else:
 					message = 'Wrong username or password'
 		else:
@@ -227,11 +466,6 @@ def register_page(request):
 				)
 				client.save()
 				return redirect('/')
-				# print('User does not exists')
-				# # print(name)
-				# print(email)
-				# print(phone_number)
-				# print(location)
 	else:
 		form = ClientForm()
 

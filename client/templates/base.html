@@ -4,8 +4,10 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<link rel="icon"href="{% static 'logo.png' %}">
-	{# <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet"> #}
+	<link rel="icon" href="{% static 'logo.png' %}">
+	<!--
+	<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap" rel="stylesheet">
+	-->
 	<link rel="stylesheet" type="text/css" href="{% static "roboto2.css" %}">
 	{% block title %}
 		<title></title>
@@ -47,6 +49,7 @@
 		.header-li a {
 			color: #ccc;
 			cursor: pointer;
+			text-decoration: none;
 		}
 		.header-li a:hover {
 			text-decoration: underline;
@@ -59,14 +62,18 @@
 			justify-content: flex-start;
 			align-items: flex-start;
 			margin-top: 40px;
+			padding-top: 100px;
 			padding: 0px;
 		}
 		.accoes-div {
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			background-color: #CCEEF5;
-			margin-bottom: 5px;
+			/*background-color: #CCEEF5;*/
+			/*background: linear-gradient(to right, lightblue, rgba(0,89,138,.12), white, white);*/
+			/*margin-bottom: 5px;*/
+			border-bottom: 1px solid #ccc;
+			border-left: 1px solid #eee;
 			text-align: left;
 			width: 170px;
 			height: 25px;
@@ -74,13 +81,32 @@
 			padding-left: 5px;
 			padding-right: 5px;
 			text-decoration: none;
-			border-radius: 5px;
+			font-weight: bold;
+			/*color: #79aec8;*/
+			color: teal;
+			/*border-radius: 5px;*/
+			/*border: 1px solid #ccc;*/
 			transition: all 0.3s;
 		}
+		.accoes-div:nth-child(even) {
+			/*background-color: #F6FBFB;*/
+		}
+		.accoes-div:nth-child(1) {
+			border-top: 1px solid #ccc;
+		}
 		.accoes-div:hover {
-			background-color: lightblue;
+			/*background-color: lightblue !important;*/
+			border-left: 5px solid teal;
 			/*transform: scale(1.02);*/
 			/*border: 1px solid #ccc;*/
+		}
+		.add-gradient-to-accoes-div {
+			background: linear-gradient(to right, lightblue, rgba(0,89,138,.12), white, white);
+		}
+		.highlighted-accoes-div {
+			color: white;
+			/*background-color: #3FC4E1;*/
+			background-color: #56BBE1;
 		}
 		.accoes-div:focus {
 
@@ -92,10 +118,18 @@
 		.left-section {
 			width: 20%;
 			/*margin-right: 50px;*/
-			margin-left: 100px;
+			margin-left: 30px;
 		}
 		.left-section h3 {
 			font-size: 14px;
+		}
+		.right-section {
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-start;
+			align-items: flex-start;
+			width: 70%;
+			min-width: 400px;
 		}
 		@media only screen and (min-width: 900px) {
 			.left-section {
@@ -103,7 +137,7 @@
 				left: 0;
 			}
 			.right-section {
-				margin-left: 170px;
+				margin-left: 250px;
 			}
 		}
 		@media only screen and (max-width: 900px) {
@@ -125,14 +159,6 @@
 				text-align: left;
 				text-decoration: none;
 			}
-		}
-		.right-section {
-			display: flex;
-			flex-direction: column;
-			justify-content: flex-start;
-			align-items: flex-start;
-			width: 70%;
-			min-width: 400px;
 		}
 		.highlight {     
 			font-weight: bold;
@@ -164,7 +190,12 @@
 			<a href="{% url 'client:only_page' 'CDM' %}">Accoes</a>
 			<a href="{% url 'client:homepage' %}">Obrigacoes</a>
 			<a href="{% url 'client:papel_commercial' %}">Papel Comercial</a>
-			<a href="{% url "client:profile" %}">Perfil</a>
+			{% if request.user.is_superuser %}
+				<a href="{% url 'client:update_company' "CDM" %}">Cotacoes das Acoes</a>
+			{% endif %}
+			<a href="{% url "client:profile" %}">
+				Perfil ({{ request.user.first_name }} {{ request.user.last_name }})
+			</a>
 			<a href="{% url "client:logout" %}">Logout</a>
 		</div>
 
