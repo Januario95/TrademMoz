@@ -11,7 +11,8 @@ from rest_framework.viewsets import ModelViewSet
 from django.http import HttpResponse, JsonResponse
 
 from .models import (
-	Client, 
+	Client,
+	Balanco,
 	CotacoesDasAcoes,
 	Company, MetricasPorAccao,
 	DemonstracaoDeResultados,
@@ -191,15 +192,22 @@ def only_page(request, page):
 		nome_da_empresa=company
 	)
 	first_obj = objs.first()
+	last_obj = objs.last()
 	obj = objs.last()
-	serialized = obj.serialize()
+	try:
+		serialized = obj.serialize()
+		min_value = first_obj.preco_da_acao
+		max_value = 0
+	except Exception as e:
+		serialized = {}
+		min_value = 1
+		max_value = 1
 
-	min_value = first_obj.preco_da_acao
-	max_value = 0
+	
 
 	dividendo_por_acao_ultimo_valor = None
 	P_L = None
-	
+
 	try:
 		LPA = MetricasPorAccao.objects.filter(
 			nome_da_empresa=company).first()
@@ -308,21 +316,21 @@ def only_page(request, page):
 	ROE = 0.0
 	if Indicadores.exists():
 		Indicadores = Indicadores.last()
-		print(f'LAST YEAR = {Indicadores.ano}')
+		# print(f'LAST YEAR = {Indicadores.ano}')
 		ROE = Indicadores.ROE()
-		print(f'ROE = {ROE}')
+		# print(f'ROE = {ROE}')
 		serialized['ROE'] = get_value_and_color(ROE)
 
 		Roic = Indicadores.Roic()
-		print(f'Roic = {Roic}')
+		# print(f'Roic = {Roic}')
 		serialized['Roic'] = get_value_and_color(Roic)
 
 		ROA = Indicadores.ROA()
-		print(f'ROA = {ROA}')
+		# print(f'ROA = {ROA}')
 		serialized['ROA'] = get_value_and_color(ROA)
 
 		Giro_dos_Activos = Indicadores.Giro_dos_Activos()
-		print(f'Giro_dos_Activos = {Giro_dos_Activos}')
+		# print(f'Giro_dos_Activos = {Giro_dos_Activos}')
 		serialized['Giro_dos_Activos'] = get_value_and_color(Giro_dos_Activos)
 
 	index_counter_for_semanal = 0
@@ -376,8 +384,19 @@ def only_page(request, page):
 	except Exception as e:
 		pass
 
-	last_date = CotacoesDasAcoes.objects.last()
+	last_date = objs.last()
 	today = last_date.date
+	EV = last_obj.EV()
+	serialized['EV'] = get_value_and_color(EV)
+	demonstracao = DemonstracaoDeResultados.objects.filter(
+		nome_da_empresa=company
+	).last()
+	demonstracao = demonstracao.numero_medio_ponderado_de_acoes
+	serialized['numero_medio_ponderado_de_acoes'] = get_value_and_color(demonstracao)
+	ultimo_balanco = Balanco.objects.filter(
+		nome_da_empresa=company
+	).last().ano
+	serialized['ultimo_balanco'] = ultimo_balanco
 	return render(request,
 				'pages/only_page.html',
 				{'titles': titles, 'index': page, 'page': page.replace('_', ' '),

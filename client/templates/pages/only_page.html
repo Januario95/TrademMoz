@@ -39,11 +39,29 @@
 			margin-right: 20px;
 			width: 230px;
 			border-left: 4px solid teal;
+			box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 			/*border-radius: 5px;*/
 			/*border-top-left-radius: 5px;*/
 			/*border-top-right-radius: 5px;*/
 			/*background-color: rgba(0,89,138,.12);*/
 			background: linear-gradient(to right, lightblue, rgba(0,89,138,.12), white, white);
+		}
+		.right-section-right-header {
+			margin-top: 15px;
+			margin-left: 5px;
+			padding-bottom: 3px;
+			padding-left: 10px;
+			padding-top: 10px;
+			margin-right: 20px;
+			min-width: 330px;
+			background-color: white;
+			/*border-left: 1px solid #F9F4F4;
+			border-right: 1px solid #F9F4F4;*/
+			border-top: 6px solid teal;
+			box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+		}
+		.right-section-right-header div {
+			font-size: 16px;
 		}
 		.cotacao {
 
@@ -135,6 +153,21 @@
 			opacity: 0.6;
 			font-size: 14px;
 		}
+		.company-description {
+			width: 100%;
+			padding: 0px;
+			margin: 0px;
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
+		}
+		.valor-actual-value-with-currency-company {
+			color: black;
+			font-weight: bold;
+		}
+		.left-div-company-detail {
+
+		}
 	</style>
 {% endblock %}
 
@@ -158,6 +191,46 @@
 			</div>
 		</div>
 		<div class="right-section">
+			<div class="company-description">
+				<div class="right-section-right-header left-div-company-detail">
+					<div class="option var-diaria middle-option">
+						<span class="span-text option-title">Empresa:</span>
+						<span class="span-text option-value valor-actual-value-with-currency-company">{{ page }}</span>
+					</div>
+					<div class="option var-diaria middle-option">
+						<span class="span-text option-title">Sector de actuacao:</span>
+						<span class="span-text option-value valor-actual-value-with-currency-company">{{ cotacao.nome_da_empresa.sector_de_actuacao|replace_value3 }}</span>
+					</div>
+					<div class="option var-diaria middle-option">
+						<span class="span-text option-title">Codigo ISIN:</span>
+						<span class="span-text option-value format-cotacao-value-with-percent valor-actual-value-with-currency-company">{{ cotacao.Variacao_Mensal }}</span>
+					</div>
+					<div class="option var-diaria middle-option">
+						<span class="span-text option-title">Valor de Mercado</span>
+						<span class="span-text option-value valor-actual-value-with-currency valor-actual-value-with-currency-company">{{ serialized.Valor_Do_Mercado.value|replace_value4 }}</span>
+					</div>
+				</div>
+				<div class="right-section-right-header">
+					<div class="option var-diaria middle-option">
+						<span class="span-text option-title">Valor da Firma:</span>
+						<span class="span-text option-value valor-actual-value-with-currency valor-actual-value-with-currency-company">{{ serialized.EV.value|replace_value4 }}</span>
+					</div>
+					<div class="option var-diaria middle-option">
+						<span class="span-text option-title">Numero de Acoes:</span>
+						<span class="span-text option-value valor-actual-value-with-currency valor-actual-value-with-currency-company">{{ serialized.numero_medio_ponderado_de_acoes.value|replace_value4 }}</span>
+					</div>
+					<div class="option var-diaria middle-option">
+						<span class="span-text option-title">Data do Ultimo Balaço:</span>
+						<span class="span-text option-value valor-actual-value-with-currency-company">{{ serialized.ultimo_balanco }}</span>
+					</div>
+					<div class="option var-diaria middle-option">
+						<span class="span-text option-title">Tipo:</span>
+						<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Diaria }}</span>
+					</div>
+				</div>
+			</div>
+
+
 			<h3 class="acction-title">Incadores de Performance ({{ page }})</h3>
 			<div class="right-section-options">
 				<div class="left-div cotacao first-row first-row-acoes">

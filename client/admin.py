@@ -31,7 +31,8 @@ def format_value(value, symbol='MZN'):
 
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+    list_display = ('id', 'name', 'sector_de_actuacao')
+    list_editable = ('sector_de_actuacao',)
     # list_filter = ('',)
     # raw_id_fields = ('',)
     # readonly_fields = ('',)
@@ -265,6 +266,7 @@ class IndicadoresDeEndividamentoAdmin(admin.ModelAdmin):
 					'Divida_Liquido_EBITDA_',
 					'Divida_Liquido_Lucro_Liquido_',
 					'Divida_Bruta_Lucro_Liquido_']
+	list_filter = ['nome_da_empresa',]
 
 	def Divida_Bruta_Lucro_Liquido_(self, obj):
 		if obj.Divida_Bruta_Lucro_Liquido() is None:
@@ -272,14 +274,14 @@ class IndicadoresDeEndividamentoAdmin(admin.ModelAdmin):
 		if obj.Divida_Bruta_Lucro_Liquido() == 0:
 			return obj.Divida_Bruta_Lucro_Liquido()
 		return mark_safe(f'MZN {obj.Divida_Bruta_Lucro_Liquido()}')
-	Divida_Bruta_Lucro_Liquido_.short_description = 'Divida Bruta Lucro Liquido'
+	Divida_Bruta_Lucro_Liquido_.short_description = 'Divida Bruta/Lucro Liquido'
 
 	def Divida_Liquido_Lucro_Liquido_(self, obj):
 		if (obj.Divida_Liquido_Lucro_Liquido() is None or
 			obj.Divida_Liquido_Lucro_Liquido() == 0):
 			return 'Sem registo'
 		return mark_safe(f'MZN {obj.Divida_Liquido_Lucro_Liquido()}')
-	Divida_Liquido_Lucro_Liquido_.short_description = 'Divida Liquido Lucro Liquido'
+	Divida_Liquido_Lucro_Liquido_.short_description = 'Divida Líquida/Lucro Liquido'
 
 	def Divida_Liquido_EBITDA_(self, obj):
 		return obj.Divida_Liquido_EBITDA()
@@ -293,6 +295,7 @@ class IndicadoresDeEndividamentoAdmin(admin.ModelAdmin):
 	Divida_Liquido_EBITD_.short_description = 'Divida Liquido EBITD'
 
 	def Divida_Patrimonio_Liquido_(self, obj):
+		print(f'Divida_Patrimonio_Liquido = {obj.Divida_Patrimonio_Liquido()}')
 		if (obj.Divida_Patrimonio_Liquido() is None or
 			obj.Divida_Patrimonio_Liquido() == 0):
 			return 'Sem registo'
@@ -329,8 +332,10 @@ class IndicadoresDeEndividamentoAdmin(admin.ModelAdmin):
 class IndicadoresDeCrescimentoAdmin(admin.ModelAdmin):
 	list_display = ['id', 'ano', 'nome_da_empresa', 'CAGR_Receita_5A_',
 					'CAGR_Lucro_5A_']
+	list_filter = ['nome_da_empresa',]
 
 	def CAGR_Receita_5A_(self, obj):
+		print(f'CAGR_Receita_5A = {obj.CAGR_Receita_5A()}')
 		if obj.CAGR_Receita_5A() is None:
 			return mark_safe(f'Sem registo')
 		return mark_safe(f'{obj.CAGR_Receita_5A()}%')
@@ -348,6 +353,7 @@ class IndicadoresDeEficienciaAdmin(admin.ModelAdmin):
 	list_display = ['id', 'ano', 'nome_da_empresa', 'margem_bruta_',
 					'margin_EBITIDA_', 'margin_EBIT_',
 					'margin_Liquida_']
+	list_filter = ['nome_da_empresa',]
 
 	def margem_bruta_(self, obj):
 		if obj.margem_bruta() is None:
