@@ -17,6 +17,16 @@
 			width: 100%;
 			min-width: 800px;
 		}
+		.left-div-2 {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			padding-bottom: 15px;
+			border-bottom: 2px solid #ccc;
+			width: 100%;
+			/*min-width: 800px;*/
+		}
 		.right-section-options {
 			margin-top: 20px;
 		}
@@ -29,6 +39,15 @@
 			font-weight: bold;
 			height: 100px;
 			/*border: 1px solid #ccc;*/
+		}
+		.left-2 {
+			display: flex;
+			text-align: center;
+			justify-content: center;
+			align-items: center;
+			width: 150px;
+			font-weight: bold;
+			height: 100px;
 		}
 		.right-section-right {
 			margin-top: 10px;
@@ -53,15 +72,34 @@
 			padding-left: 10px;
 			padding-top: 10px;
 			margin-right: 20px;
-			min-width: 330px;
+			min-width: 390px;
+			width: 100%;
 			background-color: white;
-			/*border-left: 1px solid #F9F4F4;
-			border-right: 1px solid #F9F4F4;*/
+			border-top: 6px solid teal;
+			box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+		}
+		.right-section-right-header-2 {
+			/*margin-top: 15px;*/
+			margin-left: 20px;
+			padding-bottom: 3px;
+			padding-left: 5px;
+			padding-right: 5px;
+			padding-top: 3px;
+			/*margin-right: 20px;*/
+			width: 290px;
+			background-color: white;
 			border-top: 6px solid teal;
 			box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
 		}
 		.right-section-right-header div {
 			font-size: 16px;
+		}
+		.right-section-right-header-2 div {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: center;
+			font-size: 13px;
 		}
 		.cotacao {
 
@@ -155,11 +193,11 @@
 		}
 		.company-description {
 			width: 100%;
-			padding: 0px;
-			margin: 0px;
+			margin-left: 111px;
+			padding-bottom: 10px;
 			display: flex;
-			justify-content: space-around;
-			align-items: center;
+			justify-content: flex-end;
+			align-items: flex-end;
 		}
 		.valor-actual-value-with-currency-company {
 			color: black;
@@ -167,6 +205,47 @@
 		}
 		.left-div-company-detail {
 
+		}
+		.dados-de-balanco {
+			display: none;
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			margin-bottom: 20px;
+			padding-bottom: 20px;
+			border-bottom: 2px solid #ccc;
+		}
+		.dados-de-balanco-row {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.dados-de-balanco-row-2 {
+			display: flex;
+			flex-direction: row;
+			justify-content: center;
+			align-items: flex-start;
+		}
+		.company-title {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			border-top: 2px solid #ccc;
+		}
+		.tabela-acionista {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		.tabela-acionista td,
+		.tabela-acionista th {
+			padding: 8px;
+			border: 1px solid #ccc;
+		}
+		.tabela-acionista tr:nth-child(odd) {
+			background-color: white;
 		}
 	</style>
 {% endblock %}
@@ -225,13 +304,14 @@
 					</div>
 					<div class="option var-diaria middle-option">
 						<span class="span-text option-title">Tipo:</span>
-						<span class="span-text option-value format-cotacao-value-with-percent">{{ cotacao.Variacao_Diaria }}</span>
+						<span class="span-text option-value valor-actual-value-with-currency-company">ON</span>
 					</div>
 				</div>
 			</div>
 
-
 			<h3 class="acction-title">Incadores de Performance ({{ page }})</h3>
+
+		{% if request.user.is_superuser %}
 			<div class="right-section-options">
 				<div class="left-div cotacao first-row first-row-acoes">
 					<div class="left indicadores-title" style="margin-top: 20px;">
@@ -483,7 +563,108 @@
 						Indicadores de Governança
 					</div>
 				</div>
+
+				<div class="left-div-2">
+					<h3 class="acction-title-balanco" style="text-align:center;">Dados do Balanço Patrimonial</h3>
+					<div class="dados-de-balanco-row">
+						<div class="right-section-right-header-2">
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">Activo Total</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.total_de_activo }}</span>
+							</div>
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">Caixa e Equivalentes</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.caixa }}</span>
+							</div>
+						</div>
+						<div class="right-section-right-header-2">
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">Activo Corrente</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.activo_corrente }}</span>
+							</div>
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">Divida Bruta</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.divida_bruta }}</span>
+							</div>
+						</div>
+						<div class="right-section-right-header-2">
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">Divida Líquida</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.divida_liquida }}</span>
+							</div>
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">Património Líquido</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.total_do_capital_proprio }}</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="left-div-2">
+					<h3 class="acction-title-balanco" style="text-align:center;">Dados das Demonstraçoes dos Resultados (12 meses)</h3>
+					<div class="dados-de-balanco-row-2">
+						<div class="right-section-right-header-2">
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">Receita Liquida</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.vendas }}</span>
+							</div>
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">Lucro Bruto</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.lucros_bruto }}</span>
+							</div>
+						</div>
+						<div class="right-section-right-header-2">
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">EBITIDA</span>
+								{% if serialized.EBITIDA %}
+									<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.EBITIDA }}</span>
+								{% else %}
+									<span class="span-text" style="font-weight:bold;font-size:14px;">Sem registo</span>
+								{% endif %}
+								
+							</div>
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">EBIT</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.EBIT }}</span>
+							</div>
+						</div>
+						<div class="right-section-right-header-2">
+							<div class="option-2 option var-diaria middle-option">
+								<span class="span-text option-title valor-actual">Lucro Liquido</span>
+								<span class="span-text option-value valor-actual-value-with-currency"> {{ serialized.lucro_liquido_depois_de_imposto }}</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+
+				<div class="left-div-2">
+					<h3 class="acction-title-balanco" style="text-align:center;">Posicao Acionaria</h3>
+					<div class="dados-de-balanco-row-2">
+						<table class="tabela-acionista">
+							<thead>
+								<tr>
+									<th>Acionista</th>
+									<th>Ordinárias</th>
+									<th>Preferencial</th>
+									<th>Ultima alteracao</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Januario Cipriano</td>
+									<td>14.2345%</td>
+									<td>0.0%</td>
+									<td>14.2345</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
 			</div>
+		{% else %}
+			<h3>Update your account to view details.</h3>
+		{% endif %}
 		</div>
 	</div>
 {% endblock %}

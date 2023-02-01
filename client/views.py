@@ -13,6 +13,7 @@ from django.http import HttpResponse, JsonResponse
 from .models import (
 	Client,
 	Balanco,
+	TableDeDivida,
 	CotacoesDasAcoes,
 	Company, MetricasPorAccao,
 	DemonstracaoDeResultados,
@@ -174,7 +175,9 @@ def get_value_and_color(variable):
 	row['color'] = get_color_by_value(variable)
 	return row
 
+@login_required
 def only_page(request, page):
+	print(request.user.is_superuser)
 	data = {
 		'name': request.user.first_name + ' ' + request.user.last_name
 	}
@@ -391,12 +394,33 @@ def only_page(request, page):
 	demonstracao = DemonstracaoDeResultados.objects.filter(
 		nome_da_empresa=company
 	).last()
-	demonstracao = demonstracao.numero_medio_ponderado_de_acoes
-	serialized['numero_medio_ponderado_de_acoes'] = get_value_and_color(demonstracao)
+	numero_medio_ponderado_de_acoes = demonstracao.numero_medio_ponderado_de_acoes
+	serialized['numero_medio_ponderado_de_acoes'] = get_value_and_color(numero_medio_ponderado_de_acoes)
+	serialized['vendas'] = demonstracao.vendas
+	serialized['lucros_bruto'] = demonstracao.lucros_bruto
+	serialized['lucro_liquido_depois_de_imposto'] = demonstracao.lucro_liquido_depois_de_imposto
+	if demonstracao.EBITIDA == 0 or demonstracao.EBITIDA is None:
+		serialized['EBITIDA'] = None
+	else:
+		serialized['EBITIDA'] = demonstracao.EBITIDA
+	serialized['EBIT'] = demonstracao.EBIT
+
 	ultimo_balanco = Balanco.objects.filter(
 		nome_da_empresa=company
-	).last().ano
-	serialized['ultimo_balanco'] = ultimo_balanco
+	).last()
+	serialized['ultimo_balanco'] = ultimo_balanco.ano
+	serialized['total_de_activo'] = ultimo_balanco.total_de_activo()
+	serialized['caixa'] = ultimo_balanco.caixa
+	serialized['activo_corrente'] = ultimo_balanco.activo_corrente
+	serialized['total_do_capital_proprio'] = ultimo_balanco.total_do_capital_proprio()
+
+	table_de_divida = TableDeDivida.objects.filter(
+		nome_da_empresa=company
+	)
+	table_de_divida = table_de_divida.last()
+	serialized['divida_bruta'] = table_de_divida.divida_bruta
+	serialized['divida_liquida'] = table_de_divida.divida_liquida()
+	print(f"total_do_capital_proprio = {serialized['total_do_capital_proprio']}")
 	return render(request,
 				'pages/only_page.html',
 				{'titles': titles, 'index': page, 'page': page.replace('_', ' '),
